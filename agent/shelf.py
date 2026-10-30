@@ -10,20 +10,16 @@ a kept form is a local action, so it costs no agent run and adds nothing to the 
 
 import json
 import os
-import re
-import tempfile
-import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-HOME = Path(os.getenv("FLUID_HOME") or Path.home() / "Fluid")
+from fsutil import ALLOWED_ORIGINS, HOME, atomic_write_text, local_origin, slugify, valid_slug
+
 FORMS = HOME / "forms"
-ALLOWED_ORIGINS = {"http://localhost:5173", "http://127.0.0.1:5173"}
 MAX_BYTES = 1_000_000
-SLUG = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 
 README = """# Fluid
 
@@ -46,35 +42,21 @@ class Rename(BaseModel):
     name: str = Field(min_length=1, max_length=80)
 
 
-def _local_origin(request: Request):
-    # Anything that changes the shelf must come from the Fluid page itself, never from another site.
-    if request.headers.get("origin") not in ALLOWED_ORIGINS:
-        raise HTTPException(403, "Not allowed from this origin")
+_local_origin = local_origin
 
 
 def _slug(name: str) -> str:
-    plain = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
-    s = re.sub(r"[^a-z0-9]+", "-", plain.lower()).strip("-")[:48].strip("-")
-    return s or "form"
+    return slugify(name) if slugify(name) != "item" else "form"
 
 
 def _path(slug: str) -> Path:
-    if not SLUG.match(slug):
+    if not valid_slug(slug):
         raise HTTPException(404, "No such form")
     return FORMS / f"{slug}.json"
 
 
 def _write(path: Path, doc: dict):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(doc, f, indent=2, ensure_ascii=False)
-            f.write("\n")
-        os.replace(tmp, path)
-    finally:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
+    atomic_write_text(path, json.dumps(doc, indent=2, ensure_ascii=False) + "\n")
 
 
 def _read(path: Path) -> dict | None:

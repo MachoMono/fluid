@@ -8,7 +8,7 @@ import { HttpAgent } from '@ag-ui/client'
 import { renderTree, applyTheme } from './render.js'
 import { createInspector } from './inspector.js'
 import { createDive } from './dive.js'
-import { shelf, suggestName, ago } from './shelf.js'
+import { shelf, playbooks, work, lines, suggestName, ago } from './shelf.js'
 import './components.css'
 import './shell.css'
 
@@ -213,10 +213,93 @@ const api = {
   values,
   onValue() {},
   onAction(action, payload) {
+    if (typeof action === 'string' && action.startsWith('fluid:')) { localAction(action, payload); return }
     const text = `[ui-event] ${JSON.stringify({ action, payload, values })}`
     if (running) pendingEvent = text
     else send(text)
   },
+}
+
+// ---- playbooks and work ---------------------------------------------------------------------------------
+// Playbooks are files; the shell loads one into the agent only when you run it. The agent proposes, you approve:
+// results and playbooks are saved by the shell when you press the button, never by the agent.
+
+let activePlaybook = ''   // name of the playbook being run, recorded on the work item it produces
+
+async function runPlaybook(p) {
+  if (running) return
+  try {
+    const pb = await playbooks.get(p.id)
+    activePlaybook = pb.name
+    playbooks.ran(p.id).then(refreshShelf).catch(() => {})
+    send(`[fluid:run-playbook]\n${pb.text}`)
+  } catch (e) { whisper(e.message) }
+}
+
+function draftPlaybook(nameHint) {
+  if (running) return
+  send(`[fluid:draft-playbook] Suggested name: ${nameHint || 'none'}`)
+}
+
+// Put a surface built here, not by the agent, on screen; the agent sees it as the current state.
+function place(ui) {
+  const next = { ...agent.state, ui, theme: agent.state?.theme ?? {} }
+  agent.state = next
+  adopt(next)
+}
+
+const fieldValue = (name) => values[name] ?? document.querySelector(`#surface [data-name="${name}"]`)?.value ?? ''
+
+async function showWork() {
+  if (dive.isOpen()) return
+  try {
+    const items = await work.list()
+    place({ id: 'work', type: 'stack', gap: 22, children: [
+      { id: 'work-h', type: 'heading', level: 1, text: 'Work' },
+      items.length
+        ? { id: 'work-l', type: 'list', items: items.map((w) => ({
+            title: w.title,
+            subtitle: [w.playbook || w.kind, ago(w.made), w.status === 'done' ? 'done' : ''].filter(Boolean).join(' · '),
+            action: 'fluid:open-work', payload: { id: w.id } })) }
+        : { id: 'work-e', type: 'text', tone: 'quiet', text: 'Nothing here yet. Results from your playbooks are saved here.' },
+    ] })
+  } catch (e) { whisper(e.message) }
+}
+
+async function showWorkItem(id) {
+  try {
+    const w = await work.get(id)
+    const done = w.status === 'done'
+    place({ id: 'wk', type: 'stack', gap: 18, children: [
+      { id: 'wk-h', type: 'heading', level: 1, text: w.title },
+      { id: 'wk-m', type: 'text', tone: 'quiet', text: [w.playbook || w.kind, ago(w.made), done ? 'done' : 'open'].filter(Boolean).join(' · ') },
+      { id: 'wk-b', type: 'markdown', text: w.body },
+      { id: 'wk-s', type: 'button', label: done ? 'Reopen' : 'Mark done', variant: done ? 'quiet' : 'primary',
+        action: 'fluid:work-status', payload: { id: w.id, status: done ? 'open' : 'done' } },
+    ] })
+  } catch (e) { whisper(e.message) }
+}
+
+async function localAction(action, payload) {
+  try {
+    if (action === 'fluid:save-work') {
+      const w = agent.state?.work
+      if (!w?.title || !w?.body) { whisper('There is nothing to save yet.'); return }
+      const saved = await work.create({ title: String(w.title), kind: String(w.kind || 'note'), body: String(w.body), playbook: activePlaybook })
+      agent.state = { ...agent.state, work: null }
+      whisper(`Saved “${saved.title}” to Work.`)
+    } else if (action === 'fluid:save-playbook') {
+      const name = fieldValue('pb_name').trim()
+      if (!name) { whisper('Give the playbook a name first.'); return }
+      const saved = await playbooks.create({
+        name, purpose: fieldValue('pb_purpose').trim(), ask: lines(fieldValue('pb_ask')), steps: lines(fieldValue('pb_steps')),
+        approvals: lines(fieldValue('pb_approvals')), result: fieldValue('pb_result').trim(),
+      })
+      await refreshShelf()
+      whisper(`Saved the playbook “${saved.name}”. It is on the main screen.`)
+    } else if (action === 'fluid:open-work') await showWorkItem(payload?.id)
+    else if (action === 'fluid:work-status') { await work.status(payload.id, payload.status); await showWorkItem(payload.id) }
+  } catch (e) { whisper(e.message) }
 }
 
 // ---- shell controls -------------------------------------------------------------------------------------
@@ -232,6 +315,7 @@ $('stop').addEventListener('click', () => agent.abortRun())
 $('back').addEventListener('click', flowBack)
 $('rest').addEventListener('click', clear)
 $('depth').addEventListener('click', () => diveIn(null))
+$('work').addEventListener('click', showWork)
 
 // Tone: stone (default) or blue water. A personal preference, kept in the browser, applied before first paint.
 function setTone(tone) {
@@ -252,6 +336,7 @@ $('tone').addEventListener('click', () => setTone(root.dataset.tone === 'blue' ?
 
 const suggestions = ['A calm focus timer', 'Plan a week in Lisbon', 'Teach me the circle of fifths', 'Think through a decision with me']
 let kept = []             // [{id, name, kept}] newest first
+let plays = []            // [{id, name, purpose, last_run}]
 let keptSig = null        // signature of the form that was just kept, so the button can say Kept
 
 function el(tag, cls, text) {
@@ -263,8 +348,13 @@ function el(tag, cls, text) {
 
 function renderShelf() {
   const ul = $('suggest')
-  ul.classList.toggle('kept', kept.length > 0)
-  if (!kept.length) {
+  // Kept forms and playbooks share one list. A playbook never run yet sits on top; after that, most recent first.
+  const items = [
+    ...kept.map((f) => ({ type: 'form', id: f.id, name: f.name, when: f.kept })),
+    ...plays.map((p) => ({ type: 'playbook', id: p.id, name: p.name, when: p.last_run || '9999' })),
+  ].sort((a, b) => (a.when < b.when ? 1 : -1))
+  ul.classList.toggle('kept', items.length > 0)
+  if (!items.length) {
     ul.replaceChildren(...suggestions.map((s) => {
       const li = el('li'), b = el('button', '', s)
       b.type = 'button'
@@ -274,11 +364,11 @@ function renderShelf() {
     }))
     return
   }
-  ul.replaceChildren(...kept.slice(0, 6).map((f) => {
+  ul.replaceChildren(...items.slice(0, 6).map((f) => {
     const li = el('li')
     const open = el('button', 'kept-open', f.name); open.type = 'button'
-    open.addEventListener('click', () => openKept(f))
-    const date = el('span', 'kept-date', ago(f.kept))
+    open.addEventListener('click', () => (f.type === 'playbook' ? runPlaybook(f) : openKept(f)))
+    const date = el('span', f.type === 'playbook' ? 'kept-date kept-run' : 'kept-date', f.type === 'playbook' ? 'Run' : ago(f.when))
     const rm = el('button', 'kept-remove', 'Remove'); rm.type = 'button'
     let armed = 0
     rm.addEventListener('click', async () => {
@@ -289,12 +379,11 @@ function renderShelf() {
       }
       clearTimeout(armed)
       try {
-        await shelf.remove(f.id)
+        await (f.type === 'playbook' ? playbooks.remove(f.id) : shelf.remove(f.id))
         li.classList.add('leaving')
         await new Promise((r) => setTimeout(r, reduceMotion() ? 0 : 290))
         await refreshShelf(); whisper(`Removed “${f.name}”.`)
-      }
-      catch (e) { whisper(e.message) }
+      } catch (e) { whisper(e.message) }
     })
     rm.addEventListener('blur', () => { clearTimeout(armed); armed = 0; rm.textContent = 'Remove' })
     li.append(open, date, rm)
@@ -303,7 +392,8 @@ function renderShelf() {
 }
 
 async function refreshShelf() {
-  try { kept = await shelf.list() } catch { kept = [] }   // agent not running: the shelf simply stays empty
+  // Agent not running: the shelf simply stays empty, and nothing on disk is touched.
+  ;[kept, plays] = await Promise.all([shelf.list().catch(() => []), playbooks.list().catch(() => [])])
   renderShelf()
 }
 
@@ -347,6 +437,7 @@ function closeKeep({ refocus = false } = {}) {
 }
 $('keep').addEventListener('click', openKeep)
 $('keepcancel').addEventListener('click', () => closeKeep({ refocus: true }))
+$('keeprepeat').addEventListener('click', () => { const n = $('keepname').value.trim(); closeKeep(); draftPlaybook(n) })
 $('keepname').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeKeep({ refocus: true }) } })
 $('keepform').addEventListener('submit', async (e) => {
   e.preventDefault()

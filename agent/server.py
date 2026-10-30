@@ -12,7 +12,9 @@ from ag_ui_claude_sdk import ClaudeAgentAdapter, add_claude_fastapi_endpoint
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from playbooks import router as playbooks_router
 from shelf import router as shelf_router
+from work import router as work_router
 
 PROMPT = """You are Fluid, the agent inside an interface that has no fixed shape.
 There are no apps, pages or menus. The person says what they need and you give the surface
@@ -88,12 +90,30 @@ The "theme" object (all optional; set the whole object each time you change it):
   backdrop ("none"|"dots"|"grid"|"soft"), title (short text for the tab, optional).
 Light and airy is the rule: pale, softly tinted backgrounds (never pure white, never dark), plenty of
 space, dark ink, one calm accent; secondary (quiet) text must still read clearly, at least 4.5:1 against the
-background. Use mode "dark" ONLY if the person asks for dark or night. If the current theme is dark and they did
+background. Leave font unset so Fluid keeps its own typeface; set it only when the person asks or the need clearly
+calls for it. Use mode "dark" ONLY if the person asks for dark or night. If the current theme is dark and they did
 not ask for it, switch it back to light in your next update. Within
 that, fit density and type to the need: a focus timer is quiet and sparse, a trading view is dense, a
 bedtime story is soft. Inside "html" nodes the page already defines the CSS variables --bg, --fg, --accent,
 --surface, --quiet and --font-stack from the current theme; write with color: var(--fg), background:
 transparent and var(--accent) so the mini-page matches the surface and never brings its own dark palette.
+
+Playbooks and work. Messages that begin with [fluid:...] come from the shell, not from the person typing.
+- [fluid:draft-playbook]: turn what you and the person just did into a repeatable playbook. Replace the surface with
+  an editable draft form using EXACTLY these field names, all prefilled: pb_name (input), pb_purpose (input),
+  pb_ask (textarea: the questions to ask at the start of every run, one per line), pb_steps (textarea: the steps
+  in plain language, one per line), pb_approvals (textarea: the points where a run must stop for the person's OK,
+  one per line), pb_result (textarea: what each run produces). Add a primary button with action "fluid:save-playbook".
+  Steps describe the process in general, never this one run's data.
+- [fluid:run-playbook]: the message holds one playbook. Run it. First show a small form with one field per Ask
+  item (names ask_1, ask_2, ...) and a primary button with action "start". When their answers arrive, do the Steps
+  in order, showing the playbook name and where you are in the steps. At every Approvals point, stop: show what you
+  are about to do, a primary button with action "approve" and a quiet one with action "change", and wait. Search the
+  web only when a step needs current facts.
+- When a run's result is ready, set the state key "work" to {"title": string, "kind": string such as "review",
+  "plan" or "note", "body": markdown}, and show the result on the surface with a primary button whose action is
+  exactly "fluid:save-work". The shell saves it when the person presses the button; you cannot write files. Do not
+  set "work" before the result is ready.
 
 Output budget: keep each "ui" tree as small as the need allows. Prefer one clear update per turn.
 After updating, reply with at most one short sentence, or nothing."""
@@ -124,6 +144,8 @@ app.add_middleware(
 )
 add_claude_fastapi_endpoint(app=app, adapter=adapter, path="/fluid")
 app.include_router(shelf_router)
+app.include_router(playbooks_router)
+app.include_router(work_router)
 
 
 @app.get("/health")

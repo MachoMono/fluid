@@ -22,11 +22,13 @@
         <button type="button" id="back" disabled title="Return to the previous form">Back</button>
         <button type="button" id="rest" title="Clear the surface">Clear</button>
         <button type="button" id="keep" hidden title="Keep this form on your shelf">Keep</button>
+        <button type="button" id="work" title="Results your playbooks have saved">Work</button>
         <button type="button" id="tone" aria-pressed="false" title="Blue water tone">Blue</button>
         <button type="button" id="depth" title="See how this surface is made (Alt+D)">Depth</button>
         <form id="keepform" hidden autocomplete="off">
           <input id="keepname" maxlength="80" aria-label="Name this form" placeholder="Name this form">
           <button type="submit">Keep</button>
+          <button type="button" id="keeprepeat" title="Turn what you just did into a playbook you can run again">Make repeatable</button>
           <button type="button" id="keepcancel">Cancel</button>
         </form>
         <span id="whisper" role="status"></span>

@@ -48,11 +48,26 @@ again to return to the stone default.
 - The agent never reads the shelf, so keeping things adds nothing to its context.
 - Set `FLUID_HOME` to keep the folder somewhere else.
 
+## Playbooks and work
+
+- A **playbook** is a repeatable process stored as a readable markdown file in `~/Fluid/playbooks/`: what to ask,
+  the steps, where to stop for your approval, and what each run produces. A Weekly review comes as an example
+  (`agent/examples/weekly-review.md`).
+- **Make repeatable** (offered when you press Keep) has the agent draft a playbook from what you just did. You edit
+  the draft on the surface and save it. Nothing runs by itself: the trigger is you pressing the playbook on the
+  main screen.
+- Running a playbook loads only that playbook into the agent. It asks for its inputs, does the steps, stops at
+  approval points, and ends with a result. The agent proposes, and the shell saves the result when you press
+  the button. The agent has no file access.
+- Results are **work items**: markdown files in `~/Fluid/work/` that say which playbook made them. The **Work**
+  button lists them, and each can be marked done.
+
 ## Layout
 
 ```
 agent/server.py        the agent and the prompt that defines the node vocabulary
 agent/shelf.py         the shelf: kept forms as plain files in ~/Fluid
+agent/playbooks.py     playbooks as markdown files; agent/work.py holds work items; agent/fsutil.py shared helpers
 web/src/main.js        shell: AG-UI connection, morphing, history, voice input, dive wiring
 web/src/dive.js        the zoom between the surface and the depths (Web Animations, reversible)
 web/src/inspector.js   the depth view: event stream, shared state, node spec

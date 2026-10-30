@@ -15,6 +15,28 @@ export const shelf = {
   remove: (id) => call(`/shelf/${encodeURIComponent(id)}`, { method: 'DELETE' }),
 }
 
+const enc = encodeURIComponent
+const post = (path) => call(path, { method: 'POST' })   // no body: the browser still sends its Origin header
+
+// Playbooks: repeatable processes, stored as markdown files in ~/Fluid/playbooks.
+export const playbooks = {
+  list: () => call('/playbooks'),
+  get: (id) => call(`/playbooks/${enc(id)}`),
+  create: (p) => call('/playbooks', json('POST', p)),
+  ran: (id) => post(`/playbooks/${enc(id)}/ran`),
+  remove: (id) => call(`/playbooks/${enc(id)}`, { method: 'DELETE' }),
+}
+
+// Work: what runs produce, stored as markdown files in ~/Fluid/work.
+export const work = {
+  list: () => call('/work'),
+  get: (id) => call(`/work/${enc(id)}`),
+  create: (w) => call('/work', json('POST', w)),
+  status: (id, status) => call(`/work/${enc(id)}`, json('PATCH', { status })),
+}
+
+export const lines = (text) => String(text ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
+
 // A name to offer when keeping: the title the agent gave the surface, else the first heading, else a plain fallback.
 export function suggestName(ui, theme) {
   if (typeof theme?.title === 'string' && theme.title.trim()) return theme.title.trim()

@@ -90,6 +90,7 @@ body.resting #below { display: block; flex: 1; padding-top: 18px; padding-bottom
 #suggest { max-width: 560px; width: 100%; }
 #suggest li { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 12px; }
 #suggest.kept button.kept-open { color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kept-run { color: var(--accent); }
 .kept-date { color: var(--quiet); font-size: .85rem; white-space: nowrap; }
 #suggest button.kept-remove {
   display: none; color: var(--quiet); font-size: .85rem; padding: 6px 0; transform: none;
@@ -107,6 +108,7 @@ body.resting #below { display: block; flex: 1; padding-top: 18px; padding-bottom
 }
 #keepname:focus-visible { border-bottom-color: var(--accent); }
 #keepform button[type="submit"] { color: var(--fg); font-weight: 500; }
+#keepform button { white-space: nowrap; }
 
 #tools > :not([hidden]) { animation: rise .5s var(--flow-ease) both; }
 #suggest li.leaving { opacity: 0; transform: translateX(10px); transition: opacity .28s ease, transform .28s ease; }
