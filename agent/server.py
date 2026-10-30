@@ -170,6 +170,7 @@ adapter = ClaudeAgentAdapter(
         "model": os.getenv("FLUID_MODEL", "claude-sonnet-5-5"),
         "system_prompt": PROMPT,
         "disallowed_tools": DISALLOWED,
+        "allowed_tools": ["WebSearch"],   # allowed outright: a background run has nobody to click "approve"
     },
 )
 
