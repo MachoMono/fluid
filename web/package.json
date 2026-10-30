@@ -1,0 +1,16 @@
+{
+  "name": "fluid-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@ag-ui/client": "1.0.3"
+  },
+  "devDependencies": {
+    "vite": "7.1.5"
+  }
+}

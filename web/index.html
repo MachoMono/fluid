@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fluid</title>
+</head>
+<body>
+  <main id="surface" aria-live="polite"></main>
+  <section id="still">
+    <p id="still-line">Say what you need.</p>
+    <div id="suggest"></div>
+  </section>
+  <div id="whisper" role="status"></div>
+  <form id="intent" autocomplete="off">
+    <button type="button" id="back" title="Flow back to the previous form" aria-label="Previous form" disabled>↩</button>
+    <input id="say" type="text" placeholder="Say what you need" aria-label="Say what you need">
+    <button type="button" id="mic" title="Speak" aria-label="Speak" hidden>●</button>
+    <button type="submit" id="go">Flow</button>
+    <button type="button" id="stop" hidden>Stop</button>
+    <button type="button" id="rest" title="Return to stillness" aria-label="Return to stillness">○</button>
+    <span id="pulse" aria-hidden="true"></span>
+  </form>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
