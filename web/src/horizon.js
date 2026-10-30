@@ -22,7 +22,7 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
   down.addEventListener('click', onDown)
 
   // A greeting, a calm line about where things stand, a level line, and a line to speak into. The input stays quiet
-  // until it is used: a gently rotating example sits in it, and "Flow ↵" appears only once there is something to send.
+  // until it is used, and "Flow ↵" appears only once there is something to send.
   const hero = el('div', 'hz-hero')
   const greeting = el('h1', 'hz-greeting')
   const status = el('p', 'hz-status')
@@ -31,10 +31,9 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
   form.autocomplete = 'off'
   const field = el('div', 'hz-field')
   const say = el('input', 'hz-say')
-  say.type = 'text'; say.id = 'hz-say'; say.setAttribute('aria-label', 'Say what you need, to continue in Flow')
-  const hint = el('span', 'hz-hint', '')
-  hint.setAttribute('aria-hidden', 'true')
-  field.append(say, hint)
+  say.type = 'text'; say.id = 'hz-say'; say.placeholder = 'Type here to continue in Flow'
+  say.setAttribute('aria-label', 'Say what you need, to continue in Flow')
+  field.append(say)
   const mic = el('button', 'hz-mic', 'Speak'); mic.type = 'button'; mic.hidden = true; mic.id = 'hz-mic'
   const go = el('button', 'hz-go', 'Flow ↵'); go.type = 'submit'; go.setAttribute('aria-label', 'Continue in Flow')
   form.append(field, mic, go)
@@ -48,16 +47,6 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
     onAsk(t)
   })
   hero.append(greeting, status, rule, form)
-
-  // Examples rotate slowly inside the empty line; with reduced motion the first one simply stays.
-  let hints = [], hintAt = 0
-  const showHint = () => { hint.textContent = hints[hintAt % Math.max(hints.length, 1)] || '' }
-  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
-  setInterval(() => {
-    if (calm || hints.length < 2 || say.value) return
-    hint.classList.add('out')
-    setTimeout(() => { hintAt++; showHint(); hint.classList.remove('out') }, 420)
-  }, 5200)
 
   const hello = (name) => {
     const h = new Date().getHours()
@@ -99,10 +88,9 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
 
   return {
     // needs: runs waiting on the person or failed; results: open work items; items: playbooks and kept forms
-    refresh({ needs = [], results = [], items = [], name = '', line = '', examples = [] }) {
+    refresh({ needs = [], results = [], items = [], name = '', line = '' }) {
       greeting.textContent = hello(name)
       status.textContent = line
-      if (examples.join() !== hints.join()) { hints = examples; hintAt = 0; showHint() }
       const parts = []
       if (needs.length) {
         parts.push(section('Needs you', needs.map((r) => row(r.playbook, describe(r), () => onRun(r), () => onDismiss(r.id)))))

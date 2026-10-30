@@ -82,8 +82,7 @@ async function refreshHorizon() {
     : results.length === 1 ? 'One result is ready.'
     : results.length ? `${results.length} results are ready.`
     : 'Nothing needs you.'
-  const examples = [...suggestions.slice(0, 2), ...plays.slice(0, 1).map((p) => `Run ${p.name.toLowerCase()}`), ...suggestions.slice(2)]
-  horizon.refresh({ needs, results, items: shelfItems(), name: who.name, line, examples })
+  horizon.refresh({ needs, results, items: shelfItems(), name: who.name, line })
 }
 
 // A quiet mark on the Horizon button whenever something is waiting on the person.
