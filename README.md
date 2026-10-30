@@ -1,7 +1,7 @@
 # Fluid
 
 An interface with no fixed shape. You say what you need; an agent decides the form, function and feel of the
-surface, and the surface re-forms as your need changes. There are no apps, pages or menus.
+screen, and it re-forms as your need changes. There are no apps, pages or menus.
 
 The idea comes from the way classical Chinese philosophy uses water: it takes the shape of whatever holds it,
 serves without competing, settles in the humblest place, and wears down what is rigid. The water here is a
@@ -17,11 +17,13 @@ design principle, not a visual theme.
   waterline one after another, and parts that go sink away (View Transitions API, with a plain fade as fallback).
 - For anything the node vocabulary cannot express, the agent can write a sandboxed mini-page (`html` node) that
   talks back through `postMessage`.
-- Rest is the default: no `ui`, just a place to speak. Every earlier form can be flowed back to with Back.
+- The app opens on the **Horizon**: the question, what needs you, your results, and your playbooks and kept forms.
+  Typing there drops you into **Flow**, where the agent shapes things with you. Clear returns home. Every earlier
+  form can be flowed back to with Back.
 - **Depth.** The AG-UI machinery is hidden by default. Dive under the surface to see the raw event stream, the shared
-  state, and the spec of any part of the interface. Press Alt+D or use the Depth button for the whole surface,
-  hold Alt and click a part to dive into just that part, or pinch in on a trackpad. Esc, the "Back to the surface"
-  button, or pinching out brings you back. The zoom can be reversed at any moment.
+  state, and the spec of any part of the interface. Press Alt+D or use the Depth button for all of Flow,
+  hold Alt and click a part to dive into just that part, or pinch in on a trackpad. Esc, the "Back to Flow"
+  button, or pinching out brings you back. Alt+Up goes up to the Horizon. The zoom can be reversed at any moment.
 
 ## Run it
 
@@ -54,7 +56,7 @@ again to return to the stone default.
   the steps, where to stop for your approval, and what each run produces. A Weekly review comes as an example
   (`agent/examples/weekly-review.md`).
 - **Make repeatable** (offered when you press Keep) has the agent draft a playbook from what you just did. You edit
-  the draft on the surface and save it. Nothing runs by itself: the trigger is you pressing the playbook on the
+  the draft in Flow and save it. Nothing runs by itself: the trigger is you pressing the playbook on the
   main screen.
 - Running a playbook loads only that playbook into the agent. It asks for its inputs, does the steps, stops at
   approval points, and ends with a result. The agent proposes, and the shell saves the result when you press
@@ -69,7 +71,7 @@ agent/server.py        the agent and the prompt that defines the node vocabulary
 agent/shelf.py         the shelf: kept forms as plain files in ~/Fluid
 agent/playbooks.py     playbooks as markdown files; agent/work.py holds work items; agent/fsutil.py shared helpers
 web/src/main.js        shell: AG-UI connection, morphing, history, voice input, dive wiring
-web/src/dive.js        the zoom between the surface and the depths (Web Animations, reversible)
+web/src/dive.js        the zoom between Flow and Depth (Web Animations, reversible)
 web/src/inspector.js   the depth view: event stream, shared state, node spec
 web/src/shelf.js       client for the shelf
 web/src/render.js      renders the agent's node tree safely (style whitelist, sandboxed html)

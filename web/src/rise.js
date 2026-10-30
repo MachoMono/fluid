@@ -71,6 +71,13 @@ export function createRise({ stage, horizon, haze, onOpened, onClosed }) {
     settle(gen)
   }
 
+  // Start on the Horizon without the journey: used when the app opens.
+  function openInstant() {
+    if (heading === 'horizon') return
+    open()
+    anims.forEach((a) => a.finish())
+  }
+
   function close() {
     if (heading !== 'horizon' || !anims) return
     heading = 'surface'
@@ -81,5 +88,5 @@ export function createRise({ stage, horizon, haze, onOpened, onClosed }) {
     settle(gen)
   }
 
-  return { open, close, isOpen }
+  return { open, openInstant, close, isOpen }
 }

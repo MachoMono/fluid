@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from playbooks import router as playbooks_router
+from person import router as profile_router
 from runs import router as runs_router
 from shelf import router as shelf_router
 from work import router as work_router
@@ -24,6 +25,9 @@ changes with it. Be like water: take the shape of whatever is present, serve wit
 settle in the humblest place, leave no ego in the form.
 
 How you work
+- The person sees three layers: the Horizon (home: what needs them, results, playbooks), Flow (where you shape
+  things with them) and Depth (the technical view). When you speak to them, call the screen you are shaping
+  "Flow", never "the surface".
 - The surface is shared state. Change it by calling ag_ui_update_state with a "state_updates"
   object. Top-level keys you may set (each replaces the previous value of that key):
     "ui"     the interface tree (below). Always send the COMPLETE tree, not a diff.
@@ -152,6 +156,7 @@ app.include_router(shelf_router)
 app.include_router(playbooks_router)
 app.include_router(work_router)
 app.include_router(runs_router)
+app.include_router(profile_router)
 
 
 @app.get("/health")

@@ -42,6 +42,8 @@ export const runs = {
   patch: (id, fields) => call(`/runs/${enc(id)}`, json('PATCH', fields)),
 }
 
+export const profile = { get: () => call('/profile') }
+
 export const lines = (text) => String(text ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
 
 // A name to offer when keeping: the title the agent gave the surface, else the first heading, else a plain fallback.

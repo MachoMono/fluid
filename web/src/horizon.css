@@ -12,14 +12,51 @@
 .horizon-root button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
 .horizon-root :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
-.horizon-root .hz-back { display: inline-flex; align-items: center; gap: 12px; color: var(--accent); padding: 4px 0; margin-bottom: 36px; }
-.horizon-root .hz-back:hover span { text-decoration: underline; text-underline-offset: 4px; }
+.horizon-root .hz-down { display: inline-flex; align-items: center; gap: 12px; color: var(--accent); padding: 4px 0; }
+.horizon-root .hz-down:hover span { text-decoration: underline; text-underline-offset: 4px; }
+.horizon-root .hz-down { display: flex; width: fit-content; margin-left: auto; }
 .horizon-root kbd {
   font: 500 11px var(--font-stack); color: var(--quiet); padding: 1px 6px; border-radius: 4px;
   border: 1px solid color-mix(in srgb, var(--quiet) 40%, transparent);
 }
 
-.horizon-root .hz-body { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+/* A greeting, where things stand, a level line, and a line to speak into. Quiet until used. */
+.horizon-root .hz-hero { max-width: 760px; margin: 0 auto; padding-top: 5vh; }
+.horizon-root .hz-greeting {
+  margin: 0; font-weight: 300; font-size: clamp(2.2rem, 5.6vw, 4.1rem); line-height: 1.05; letter-spacing: -0.03em; text-wrap: balance;
+}
+.horizon-root .hz-status { margin: 12px 0 0; color: var(--quiet); font-size: clamp(1rem, 1.6vw, 1.15rem); min-height: 1.5em; }
+.horizon-root .hz-rule { height: 1px; margin: 26px 0 4px; background: color-mix(in srgb, var(--fg) 55%, transparent); }
+.horizon-root .hz-ask { display: flex; align-items: baseline; gap: 6px; }
+.horizon-root .hz-field { position: relative; flex: 1; min-width: 0; }
+.horizon-root .hz-say {
+  width: 100%; font: inherit; font-size: clamp(1.15rem, 2.4vw, 1.5rem); font-weight: 300; letter-spacing: -0.01em;
+  color: var(--fg); caret-color: var(--accent); background: transparent; border: 0; outline: 0; padding: 10px 0; border-radius: 0;
+}
+.horizon-root .hz-say:focus-visible { outline: 0; }
+.horizon-root .hz-ask:has(.hz-say:focus-visible) { box-shadow: inset 0 -1px 0 var(--accent); }
+.horizon-root .hz-hint {
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%); pointer-events: none; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  font-size: clamp(1.15rem, 2.4vw, 1.5rem); font-weight: 300; letter-spacing: -0.01em; color: var(--quiet); opacity: .8;
+  transition: opacity 420ms ease;
+}
+.horizon-root .hz-hint.out { opacity: 0; }
+.horizon-root .hz-ask.has .hz-hint { opacity: 0; }
+.horizon-root .hz-mic { color: var(--quiet); padding: 6px 10px; border-radius: 4px; font-size: .95rem; }
+.horizon-root .hz-mic:hover { color: var(--fg); }
+.horizon-root .hz-mic.on { color: var(--bad); }
+.horizon-root .hz-go {
+  color: var(--accent); font-weight: 500; padding: 6px 10px; border-radius: 4px; font-size: .95rem; white-space: nowrap;
+  opacity: 0; pointer-events: none; transform: translateX(-6px); transition: opacity 320ms ease, transform 320ms var(--flow-ease, ease);
+}
+.horizon-root .hz-ask.has .hz-go { opacity: 1; pointer-events: auto; transform: none; }
+@media (prefers-reduced-motion: reduce) { .horizon-root .hz-hint, .horizon-root .hz-go { transition: none; } }
+.horizon-root .shelf-list { max-width: none; }
+.horizon-root .shelf-list button { padding-left: 0; padding-right: 0; }
+.horizon-root .shelf-list li { width: 100%; }
+
+.horizon-root .hz-body { max-width: 760px; margin: 28px auto 0; display: flex; flex-direction: column; gap: 40px; }
 .horizon-root .hz-title { margin: 0 0 8px; font-size: .9rem; font-weight: 500; color: var(--quiet); }
 .horizon-root .hz-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
 .horizon-root .hz-open { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 12px 0; border-radius: 4px; }
@@ -29,9 +66,6 @@
 .horizon-root .hz-clear { font-size: .85rem; color: var(--quiet); padding: 4px 0; white-space: nowrap; }
 .horizon-root .hz-clear:hover { color: var(--bad); }
 
-.horizon-root .hz-calm { padding-top: 14vh; }
-.horizon-root .hz-calm-line { margin: 0; font-weight: 300; font-size: clamp(1.8rem, 4.6vw, 3.2rem); letter-spacing: -0.02em; line-height: 1.1; }
-.horizon-root .hz-calm-sub { margin: 10px 0 0; color: var(--quiet); }
 
 #up.signal { color: var(--accent); }
 #up.signal::after { content: "\25CF"; font-size: .55em; margin-left: 5px; vertical-align: middle; }

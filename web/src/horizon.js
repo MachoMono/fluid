@@ -1,7 +1,8 @@
-// The Horizon: where results arrive and anything that needs the person shows up. Fixed, glanceable layout;
-// the only things that vary are the words. Empty means all is well.
+// The Horizon: home. Ask for something, see what needs you and what has arrived, and start a playbook or open
+// something you kept. Fixed, glanceable layout; the only things that vary are the words. Calm when all is well.
 import './horizon.css'
 import { ago } from './shelf.js'
+import { renderShelfInto } from './shelfview.js'
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag)
@@ -10,16 +11,64 @@ const el = (tag, cls, text) => {
   return n
 }
 
-export function createHorizon(mount, { onSurface, onWork, onRun, onDismiss }) {
+// handlers: onDown(), onAsk(text), onWork(id), onRun(run), onDismiss(runId)
+// shelf: hooks for renderShelfInto, plus suggestions
+export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, shelf, suggestions }) {
   mount.classList.add('horizon-root')
 
-  const back = el('button', 'hz-back')
-  back.type = 'button'
-  back.append(el('span', '', 'Back to the surface'), el('kbd', '', 'Esc'))
-  back.addEventListener('click', onSurface)
+  const down = el('button', 'hz-down')
+  down.type = 'button'
+  down.append(el('span', '', 'Open Flow'), el('kbd', '', 'Alt ↓'))
+  down.addEventListener('click', onDown)
+
+  // A greeting, a calm line about where things stand, a level line, and a line to speak into. The input stays quiet
+  // until it is used: a gently rotating example sits in it, and "Flow ↵" appears only once there is something to send.
+  const hero = el('div', 'hz-hero')
+  const greeting = el('h1', 'hz-greeting')
+  const status = el('p', 'hz-status')
+  const rule = el('div', 'hz-rule')
+  const form = el('form', 'hz-ask')
+  form.autocomplete = 'off'
+  const field = el('div', 'hz-field')
+  const say = el('input', 'hz-say')
+  say.type = 'text'; say.id = 'hz-say'; say.setAttribute('aria-label', 'Say what you need, to continue in Flow')
+  const hint = el('span', 'hz-hint', '')
+  hint.setAttribute('aria-hidden', 'true')
+  field.append(say, hint)
+  const mic = el('button', 'hz-mic', 'Speak'); mic.type = 'button'; mic.hidden = true; mic.id = 'hz-mic'
+  const go = el('button', 'hz-go', 'Flow ↵'); go.type = 'submit'; go.setAttribute('aria-label', 'Continue in Flow')
+  form.append(field, mic, go)
+  say.addEventListener('input', () => form.classList.toggle('has', say.value.trim().length > 0))
+  form.addEventListener('submit', (e) => {
+    e.preventDefault()
+    const t = say.value.trim()
+    if (!t) return
+    say.value = ''
+    form.classList.remove('has')
+    onAsk(t)
+  })
+  hero.append(greeting, status, rule, form)
+
+  // Examples rotate slowly inside the empty line; with reduced motion the first one simply stays.
+  let hints = [], hintAt = 0
+  const showHint = () => { hint.textContent = hints[hintAt % Math.max(hints.length, 1)] || '' }
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches
+  setInterval(() => {
+    if (calm || hints.length < 2 || say.value) return
+    hint.classList.add('out')
+    setTimeout(() => { hintAt++; showHint(); hint.classList.remove('out') }, 420)
+  }, 5200)
+
+  const hello = (name) => {
+    const h = new Date().getHours()
+    const part = h < 5 ? 'Hello' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'
+    return name ? `${part}, ${name}.` : `${part}.`
+  }
 
   const body = el('div', 'hz-body')
-  mount.append(back, body)
+  const shelfList = el('ul', 'hz-shelf shelf-list')
+  shelfList.id = 'hz-shelf'
+  mount.append(down, hero, body)
 
   const section = (title, rows) => {
     const s = el('section', 'hz-section')
@@ -49,8 +98,11 @@ export function createHorizon(mount, { onSurface, onWork, onRun, onDismiss }) {
   }
 
   return {
-    // needs: runs waiting on the person or failed; results: open work items
-    refresh({ needs = [], results = [] }) {
+    // needs: runs waiting on the person or failed; results: open work items; items: playbooks and kept forms
+    refresh({ needs = [], results = [], items = [], name = '', line = '', examples = [] }) {
+      greeting.textContent = hello(name)
+      status.textContent = line
+      if (examples.join() !== hints.join()) { hints = examples; hintAt = 0; showHint() }
       const parts = []
       if (needs.length) {
         parts.push(section('Needs you', needs.map((r) => row(r.playbook, describe(r), () => onRun(r), () => onDismiss(r.id)))))
@@ -58,13 +110,11 @@ export function createHorizon(mount, { onSurface, onWork, onRun, onDismiss }) {
       if (results.length) {
         parts.push(section('Results', results.map((w) => row(w.title, `${w.playbook || w.kind} · ${ago(w.made)}`, () => onWork(w.id)))))
       }
-      if (!parts.length) {
-        const calm = el('div', 'hz-calm')
-        calm.append(el('p', 'hz-calm-line', 'Nothing needs you.'), el('p', 'hz-calm-sub', 'Results from your playbooks arrive here.'))
-        parts.push(calm)
-      }
+      renderShelfInto(shelfList, items, shelf, suggestions)
+      parts.push(items.length ? section('Shelf', [shelfList]) : shelfList)
       body.replaceChildren(...parts)
     },
-    focusFirst() { back.focus() },
+    attachMic() { return { mic, say } },
+    focusFirst() { say.focus() },
   }
 }

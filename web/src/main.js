@@ -8,8 +8,9 @@ import { HttpAgent } from '@ag-ui/client'
 import { renderTree, applyTheme } from './render.js'
 import { createInspector } from './inspector.js'
 import { createDive } from './dive.js'
-import { shelf, playbooks, work, runs, lines, suggestName, ago } from './shelf.js'
+import { shelf, playbooks, work, runs, profile, lines, suggestName, ago } from './shelf.js'
 import { createHorizon } from './horizon.js'
+import { renderShelfInto } from './shelfview.js'
 import { createRise } from './rise.js'
 import './components.css'
 import './shell.css'
@@ -56,7 +57,7 @@ let returnFocus = null
 const rise = createRise({
   stage: $('stage'), horizon: $('horizon'), haze: $('haze'),
   onOpened: () => horizon.focusFirst(),
-  onClosed: () => { returnFocus?.focus?.(); returnFocus = null; refreshSignal() },
+  onClosed: () => { (returnFocus?.isConnected ? returnFocus : $('say'))?.focus?.(); returnFocus = null; refreshSignal() },
 })
 const layered = () => dive.isOpen() || rise.isOpen()
 
@@ -75,7 +76,14 @@ async function refreshHorizon() {
     runs.list(true).catch(() => []),
     work.list().then((l) => l.filter((w) => w.status !== 'done')).catch(() => []),
   ])
-  horizon.refresh({ needs, results })
+  const who = await profile.get().catch(() => ({ name: '' }))
+  const line = needs.length === 1 ? `${needs[0].playbook} needs you.`
+    : needs.length ? `${needs.length} things need you.`
+    : results.length === 1 ? 'One result is ready.'
+    : results.length ? `${results.length} results are ready.`
+    : 'Nothing needs you.'
+  const examples = [...suggestions.slice(0, 2), ...plays.slice(0, 1).map((p) => `Run ${p.name.toLowerCase()}`), ...suggestions.slice(2)]
+  horizon.refresh({ needs, results, items: shelfItems(), name: who.name, line, examples })
 }
 
 // A quiet mark on the Horizon button whenever something is waiting on the person.
@@ -85,7 +93,17 @@ async function refreshSignal() {
 }
 
 const horizon = createHorizon($('horizon'), {
-  onSurface: closeHorizon,
+  onDown: closeHorizon,
+  onAsk: (text) => { closeHorizon(); send(text) },
+  shelf: {
+    onOpen: async (f) => { if (f.type === 'playbook') { closeHorizon(); runPlaybook(f) } else { await openKept(f); closeHorizon() } },
+    onSuggest: (t) => { closeHorizon(); send(t) },
+    remove: (f) => (f.type === 'playbook' ? playbooks.remove(f.id) : shelf.remove(f.id)),
+    refresh: () => refreshShelf(),
+    notify: (t) => whisper(t),
+    calm: reduceMotion,
+  },
+  suggestions: ['A calm focus timer', 'Plan a week in Lisbon', 'Teach me the circle of fifths', 'Think through a decision with me'],
   // Each item is placed on the surface while the Horizon is still open, so it is already there when you come down.
   onWork: async (id) => { await showWorkItem(id); closeHorizon() },
   onRun: async (r) => {
@@ -387,7 +405,7 @@ $('intent').addEventListener('submit', (e) => {
 })
 $('stop').addEventListener('click', () => agent.abortRun())
 $('back').addEventListener('click', flowBack)
-$('rest').addEventListener('click', clear)
+$('rest').addEventListener('click', () => { clear(); openHorizon() })
 $('depth').addEventListener('click', () => diveIn(null))
 $('up').addEventListener('click', () => (rise.isOpen() ? closeHorizon() : openHorizon()))
 
@@ -420,49 +438,24 @@ function el(tag, cls, text) {
   return n
 }
 
-function renderShelf() {
-  const ul = $('suggest')
-  // Kept forms and playbooks share one list. A playbook never run yet sits on top; after that, most recent first.
-  const items = [
+// Kept forms and playbooks share one list. A playbook never run yet sits on top; after that, most recent first.
+function shelfItems() {
+  return [
     ...kept.map((f) => ({ type: 'form', id: f.id, name: f.name, when: f.kept })),
     ...plays.map((p) => ({ type: 'playbook', id: p.id, name: p.name, when: p.last_run || '9999' })),
   ].sort((a, b) => (a.when < b.when ? 1 : -1))
-  ul.classList.toggle('kept', items.length > 0)
-  if (!items.length) {
-    ul.replaceChildren(...suggestions.map((s) => {
-      const li = el('li'), b = el('button', '', s)
-      b.type = 'button'
-      b.addEventListener('click', () => { if (!running) send(s) })
-      li.append(b)
-      return li
-    }))
-    return
-  }
-  ul.replaceChildren(...items.slice(0, 6).map((f) => {
-    const li = el('li')
-    const open = el('button', 'kept-open', f.name); open.type = 'button'
-    open.addEventListener('click', () => (f.type === 'playbook' ? runPlaybook(f) : openKept(f)))
-    const date = el('span', f.type === 'playbook' ? 'kept-date kept-run' : 'kept-date', f.type === 'playbook' ? 'Run' : ago(f.when))
-    const rm = el('button', 'kept-remove', 'Remove'); rm.type = 'button'
-    let armed = 0
-    rm.addEventListener('click', async () => {
-      if (!armed) {                                   // first press asks, second press removes
-        rm.textContent = 'Remove it?'
-        armed = setTimeout(() => { rm.textContent = 'Remove'; armed = 0 }, 3500)
-        return
-      }
-      clearTimeout(armed)
-      try {
-        await (f.type === 'playbook' ? playbooks.remove(f.id) : shelf.remove(f.id))
-        li.classList.add('leaving')
-        await new Promise((r) => setTimeout(r, reduceMotion() ? 0 : 290))
-        await refreshShelf(); whisper(`Removed “${f.name}”.`)
-      } catch (e) { whisper(e.message) }
-    })
-    rm.addEventListener('blur', () => { clearTimeout(armed); armed = 0; rm.textContent = 'Remove' })
-    li.append(open, date, rm)
-    return li
-  }))
+}
+
+function renderShelf() {
+  renderShelfInto($('suggest'), shelfItems(), {
+    onOpen: (f) => (f.type === 'playbook' ? runPlaybook(f) : openKept(f)),
+    onSuggest: (t) => { if (!running) send(t) },
+    remove: (f) => (f.type === 'playbook' ? playbooks.remove(f.id) : shelf.remove(f.id)),
+    refresh: () => refreshShelf(),
+    notify: (t) => whisper(t),
+    calm: reduceMotion,
+  }, suggestions)
+  if (rise.isOpen()) refreshHorizon()
 }
 
 async function refreshShelf() {
@@ -531,6 +524,9 @@ $('keepform').addEventListener('submit', async (e) => {
 // ---- going deeper: Alt+D, Alt+click on a part, pinch in; Esc or pinch out to come back ------------------
 
 addEventListener('keydown', (e) => {
+  // On the Horizon, typing anywhere starts a request: the line takes focus and the key lands in it.
+  if (rise.isOpen() && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey
+      && !['INPUT', 'TEXTAREA', 'BUTTON'].includes(document.activeElement?.tagName)) horizon.focusFirst()
   if (e.key === 'Escape' && dive.isOpen()) { e.preventDefault(); surface() }
   else if (e.key === 'Escape' && rise.isOpen()) { e.preventDefault(); closeHorizon() }
   else if (e.altKey && e.key === 'ArrowUp') { e.preventDefault(); goUp() }
@@ -575,26 +571,29 @@ addEventListener('wheel', (e) => {
   }
 }, { passive: false })
 
-// Optional voice input where the browser supports it.
+// Optional voice input where the browser supports it. The same behaviour serves Flow's line and the Horizon's.
 const Rec = window.SpeechRecognition || window.webkitSpeechRecognition
-if (Rec) {
-  const mic = $('mic'); mic.hidden = false
+function attachVoice(mic, input, onFinal) {
+  if (!Rec) return
+  mic.hidden = false
   const rec = new Rec(); rec.lang = navigator.language || 'en-US'; rec.interimResults = true
   let listening = false
-  rec.onresult = (e) => { $('say').value = [...e.results].map((r) => r[0].transcript).join('') }
-  rec.onend = () => {
-    listening = false; mic.classList.remove('on'); mic.textContent = 'Speak'
-    const t = $('say').value.trim()
-    if (t && !running) { $('say').value = ''; send(t) }
-  }
-  rec.onerror = () => { listening = false; mic.classList.remove('on'); mic.textContent = 'Speak' }
+  const idle = () => { listening = false; mic.classList.remove('on'); mic.textContent = 'Speak' }
+  rec.onresult = (e) => { input.value = [...e.results].map((r) => r[0].transcript).join('') }
+  rec.onend = () => { idle(); const t = input.value.trim(); if (t && !running) { input.value = ''; onFinal(t) } }
+  rec.onerror = idle
   mic.addEventListener('click', () => {
     if (listening) rec.stop()
     else { listening = true; mic.classList.add('on'); mic.textContent = 'Listening'; rec.start() }
   })
 }
+attachVoice($('mic'), $('say'), send)
+attachVoice(document.getElementById('hz-mic'), document.getElementById('hz-say'), (t) => { closeHorizon(); send(t) })
 
 inspector.setState(agent.state ?? saved)
 show(saved.ui ?? null, saved.theme ?? {})
 refreshShelf()
 refreshSignal()
+
+// The app opens on the Horizon. Whatever was on the surface last time is still there, one step down in Flow.
+refreshHorizon().finally(() => { rise.openInstant(); root.classList.add('ready') })

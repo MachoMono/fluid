@@ -153,9 +153,9 @@ export function createInspector(mount) {
   const top = el('header', 'dp-top');
   const back = el('button', 'dp-back');
   back.type = 'button';
-  back.append(el('span', 'dp-back-label', 'Back to the surface'), el('kbd', 'dp-kbd', 'Esc'));
+  back.append(el('span', 'dp-back-label', 'Back to Flow'), el('kbd', 'dp-kbd', 'Esc'));
   back.addEventListener('click', () => { if (surfaceCb) surfaceCb(); });
-  const title = el('h2', 'dp-title', 'Under the surface');
+  const title = el('h2', 'dp-title', 'Depth');
   const meta = el('p', 'dp-meta');
   top.append(back, title, meta);
 
@@ -296,7 +296,7 @@ export function createInspector(mount) {
     if (shapeNodeId == null) {
       info.textContent = 'Shape';
       tabText.shape = '';
-      body.appendChild(el('p', 'dp-empty', 'Dive into a piece of the surface to see its shape here.'));
+      body.appendChild(el('p', 'dp-empty', 'Alt-click a part of Flow to dive into it and see its shape here.'));
       return;
     }
     const found = state && findNode(state.ui, shapeNodeId);

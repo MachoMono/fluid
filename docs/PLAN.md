@@ -10,7 +10,7 @@ by repeating itself. A playbook is that channel.
 
 ## Principles
 
-- **Quiet by default.** Rest is an empty surface and a line to speak into. Nothing is shown that is not needed.
+- **Quiet by default.** Home is a question and a line to speak into. Nothing is shown that is not needed.
 - **Agentic is the goal, the human is always in the loop on the way there.** Autonomy is earned per playbook and only
   the person grants it.
 - **The agent proposes, the person saves.** The agent has no file access. Saving, approving and promoting are the
@@ -22,21 +22,21 @@ by repeating itself. A playbook is that channel.
 ## Three layers, one vertical axis
 
 ```
-Horizon  watch things work: what needs you, and what was produced        (glance)
+Horizon  home: ask, see what needs you, what was produced, and your playbooks  (glance, start)
 -------- the waterline
-Surface  talk to the agent, shape things, tweak a playbook                (build)
-Depth    the AG-UI events, shared state and the spec of any part          (inspect)
+Flow     talk to the agent, shape things, tweak a playbook                      (build)
+Depth    the AG-UI events, shared state and the spec of any part                (inspect)
 ```
 
-Adjacent layers only: Horizon and Depth are both one step from Surface. Moving up or down is one gesture family
-(buttons, Alt+Up / Alt+Down, pinch) with one reversible animation each way. The surface underneath is never lost
-while you are above or below it.
+Adjacent layers only: Horizon and Depth are both one step from Flow. Moving up or down is one gesture family
+(buttons, Alt+Up / Alt+Down, pinch) with one reversible animation each way. What is in Flow is never lost
+while you are above or below it. The app opens on the Horizon, and Clear returns to it.
 
 **Horizon** holds two kinds of things, both tied to playbooks:
 - *Needs you*: a run is waiting for approval, or failed. Temporary; act on it or dismiss it.
 - *Results*: work items. Lasting until marked done.
 When nothing needs the person, Horizon is nearly empty, and empty means all is well. Failures must always raise a
-notification; silence must never hide a problem. Pressing an item drops to the Surface with it loaded.
+notification; silence must never hide a problem. Pressing an item drops into Flow with that thing already on screen.
 
 ## Objects
 

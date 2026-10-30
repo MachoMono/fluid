@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Fluid</title>
+  <style>html:not(.ready) #stage { visibility: hidden }</style>
   <script>try { if (localStorage.getItem("fluid:tone") === "blue") document.documentElement.dataset.tone = "blue" } catch (e) {}</script>
 </head>
 <body>
@@ -34,7 +35,7 @@
         <span id="whisper" role="status"></span>
       </div>
     </footer>
-    <nav id="below" aria-label="Ideas"><ul id="suggest"></ul></nav>
+    <nav id="below" aria-label="Ideas"><ul id="suggest" class="shelf-list"></ul></nav>
   </div>
   <div id="veil" aria-hidden="true"></div>
   <div id="haze" aria-hidden="true"></div>

@@ -61,7 +61,7 @@ body.resting #say { font-size: clamp(1.4rem, 3.2vw, 2.1rem); font-weight: 300; l
 #mic.on { color: var(--bad) !important; }
 #say:focus-visible { outline: 0; }
 #intent:has(#say:focus-visible) { box-shadow: inset 0 -1px 0 var(--accent); }
-#intent button:focus-visible, #tools button:focus-visible, #suggest button:focus-visible {
+#intent button:focus-visible, #tools button:focus-visible, .shelf-list button:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 2px;
 }
 
@@ -79,26 +79,26 @@ body.resting #say { font-size: clamp(1.4rem, 3.2vw, 2.1rem); font-weight: 300; l
 /* ---- ideas below the line, only at rest ---- */
 #below { view-transition-name: below; display: none; }
 body.resting #below { display: block; flex: 1; padding-top: 18px; padding-bottom: 28px; }
-#suggest { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; justify-items: start; }
-#suggest button {
+.shelf-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; justify-items: start; }
+.shelf-list button {
   font: inherit; color: var(--quiet); background: none; border: 0; padding: 6px 0; cursor: pointer;
   text-align: left; transition: color .2s ease, transform .35s cubic-bezier(.22,.8,.3,1);
 }
-#suggest button:hover { color: var(--fg); transform: translateX(6px); }
+.shelf-list button:hover { color: var(--fg); transform: translateX(6px); }
 
 /* ---- kept forms: plain names under the line; the date gives way to Remove on hover or focus ---- */
-#suggest { max-width: 560px; width: 100%; }
-#suggest li { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 12px; }
-#suggest.kept button.kept-open { color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shelf-list { max-width: 560px; width: 100%; }
+.shelf-list li { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 12px; }
+.shelf-list.kept button.kept-open { color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kept-run { color: var(--accent); }
 .kept-date { color: var(--quiet); font-size: .85rem; white-space: nowrap; }
-#suggest button.kept-remove {
+.shelf-list button.kept-remove {
   display: none; color: var(--quiet); font-size: .85rem; padding: 6px 0; transform: none;
 }
-#suggest button.kept-remove:hover { color: var(--bad); transform: none; }
-#suggest li:hover .kept-date, #suggest li:focus-within .kept-date { display: none; }
-#suggest li:hover .kept-remove, #suggest li:focus-within .kept-remove { display: block; }
-@media (hover: none) { .kept-date { display: none; } #suggest button.kept-remove { display: block; } }
+.shelf-list button.kept-remove:hover { color: var(--bad); transform: none; }
+.shelf-list li:hover .kept-date, .shelf-list li:focus-within .kept-date { display: none; }
+.shelf-list li:hover .kept-remove, .shelf-list li:focus-within .kept-remove { display: block; }
+@media (hover: none) { .kept-date { display: none; } .shelf-list button.kept-remove { display: block; } }
 
 #keepform { flex: 1; display: flex; align-items: baseline; gap: 6px; justify-content: flex-end; }
 #keepform[hidden] { display: none; }
@@ -111,7 +111,7 @@ body.resting #below { display: block; flex: 1; padding-top: 18px; padding-bottom
 #keepform button { white-space: nowrap; }
 
 #tools > :not([hidden]) { animation: rise .5s var(--flow-ease) both; }
-#suggest li.leaving { opacity: 0; transform: translateX(10px); transition: opacity .28s ease, transform .28s ease; }
+.shelf-list li.leaving { opacity: 0; transform: translateX(10px); transition: opacity .28s ease, transform .28s ease; }
 
 /* ---- looking closer: hold Alt over the surface to pick a part to dive into ---- */
 body.lens #surface, body.lens #surface * { cursor: zoom-in; }
@@ -139,6 +139,6 @@ body.lens #surface, body.lens #surface * { cursor: zoom-in; }
 }
 @media (prefers-reduced-motion: reduce) {
   #tools > :not([hidden]) { animation: none; }
-  #suggest li.leaving { transition: none; }
-  #say, #suggest button, #whisper, #line path { transition: none; }
+  .shelf-list li.leaving { transition: none; }
+  #say, .shelf-list button, #whisper, #line path { transition: none; }
 }
