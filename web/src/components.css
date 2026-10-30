@@ -1,17 +1,19 @@
 /* Fluid node components. Driven entirely by custom properties set on the root. */
 
+/* Resting palette: stone with a green cast, ink, and one jade accent. Light by default, night water when the
+   system is dark; the agent's theme overrides any of it. */
 :root {
-  --bg: #f7f6f2;
-  --fg: #23262b;
-  --accent: #3f6fb5;
-  --surface: #ffffff;
-  --quiet: #7a7f87;
-  --radius: 10px;
+  --bg: #e3e8e4;
+  --fg: #16201c;
+  --accent: #1e6b57;
+  --surface: #f1f4f1;
+  --quiet: #66736c;
+  --radius: 14px;
   --gap-unit: 8px;
   --pad-unit: 16px;
   --dur: 180ms;
   --morph-ms: 450ms;
-  --font-stack: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-stack: "Zen Kaku Gothic New", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
   background-color: var(--bg);
   color: var(--fg);
@@ -19,12 +21,23 @@
 }
 
 [data-mode="dark"] {
-  --bg: #15171b;
-  --fg: #e6e7ea;
-  --accent: #8ab4f8;
-  --surface: #1f2228;
-  --quiet: #8b909a;
+  --bg: #0e1412;
+  --fg: #dde6e1;
+  --accent: #86d2b5;
+  --surface: #151d1a;
+  --quiet: #7f8d86;
   color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode]) {
+    --bg: #0e1412;
+    --fg: #dde6e1;
+    --accent: #86d2b5;
+    --surface: #151d1a;
+    --quiet: #7f8d86;
+    --good: #6cc38a; --bad: #e57f7c; --warn: #e0b562;
+    color-scheme: dark;
+  }
 }
 
 /* Derived tokens, resolved where the theme variables live. */
@@ -33,9 +46,9 @@
   --soft: color-mix(in srgb, var(--fg) 6%, transparent);
   --accent-ink: color-mix(in srgb, var(--accent) 12%, var(--bg)) ;
   --on-accent: color-mix(in srgb, var(--accent) 12%, white);
-  --good: #3f8f5f;
-  --bad: #c0504d;
-  --warn: #b8862b;
+  --good: #2f7d55;
+  --bad: #b5473f;
+  --warn: #9c7220;
 }
 [data-mode="dark"] { --good: #6cc38a; --bad: #e57f7c; --warn: #e0b562; }
 
@@ -80,7 +93,7 @@
 .f-grid > * { min-width: 0; }
 .f-free { position: relative; width: 100%; overflow: hidden; }
 .f-card {
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); border: 0; border-radius: var(--radius);
   padding: var(--pad-unit); display: flex; flex-direction: column; gap: calc(var(--gap-unit) * 1.5);
   min-width: 0;
 }
@@ -105,8 +118,8 @@
 
 /* ---------- content ---------- */
 
-.f-heading { margin: 0; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; }
-h1.f-heading { font-size: 1.9em; }
+.f-heading { margin: 0; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
+h1.f-heading { font-size: 2.2em; font-weight: 300; letter-spacing: -0.02em; }
 h2.f-heading { font-size: 1.4em; }
 h3.f-heading { font-size: 1.1em; }
 .f-text { margin: 0; line-height: 1.5; }
@@ -133,7 +146,7 @@ h3.f-heading { font-size: 1.1em; }
 
 .f-stat { display: flex; flex-direction: column; gap: 2px; }
 .f-stat-label { color: var(--quiet); font-size: 0.85em; }
-.f-stat-value { font-size: 1.9em; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; }
+.f-stat-value { font-size: 2.6em; font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
 .f-stat-delta { font-size: 0.85em; color: var(--quiet); }
 .f-stat-delta[data-dir="up"] { color: var(--good); }
 .f-stat-delta[data-dir="down"] { color: var(--bad); }
@@ -158,7 +171,7 @@ h3.f-heading { font-size: 1.1em; }
 .f-list-item {
   display: flex; align-items: center; gap: calc(var(--gap-unit) * 1.5); width: 100%; box-sizing: border-box;
   padding: calc(var(--gap-unit) * 1.25) calc(var(--gap-unit) * 0.5); text-align: left; font: inherit; color: inherit;
-  background: none; border: 0; border-radius: calc(var(--radius) * 0.6);
+  background: none; border: 0; border-radius: calc(var(--radius) * 0.3);
 }
 button.f-list-item { cursor: pointer; transition: background var(--dur) ease; }
 button.f-list-item:hover { background: var(--soft); }
@@ -167,7 +180,7 @@ button.f-list-item:hover { background: var(--soft); }
 .f-list-title { font-weight: 500; }
 .f-list-sub { color: var(--quiet); font-size: 0.85em; }
 
-.f-table-wrap { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: var(--radius); }
+.f-table-wrap { overflow-x: auto; max-width: 100%; }
 .f-table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
 .f-table th, .f-table td { text-align: left; padding: calc(var(--gap-unit) * 1.1) calc(var(--gap-unit) * 1.5); white-space: nowrap; }
 .f-table th { color: var(--quiet); font-weight: 500; border-bottom: 1px solid var(--line); }
@@ -192,7 +205,7 @@ button.f-list-item:hover { background: var(--soft); }
 .f-label { font-size: 0.85em; color: var(--quiet); }
 .f-control {
   font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line);
-  border-radius: calc(var(--radius) * 0.7); padding: calc(var(--gap-unit) * 1.1) calc(var(--gap-unit) * 1.4);
+  border-radius: calc(var(--radius) * 0.3); padding: calc(var(--gap-unit) * 1.1) calc(var(--gap-unit) * 1.4);
   min-width: 0; box-sizing: border-box; width: 100%; transition: border-color var(--dur) ease, box-shadow var(--dur) ease;
 }
 .f-control:hover { border-color: color-mix(in srgb, var(--fg) 30%, transparent); }
@@ -216,14 +229,14 @@ textarea.f-control { resize: vertical; line-height: 1.45; }
 .f-toggle:checked::after { transform: translateX(1em); }
 
 .f-button {
-  font: inherit; cursor: pointer; border-radius: calc(var(--radius) * 0.7); align-self: flex-start;
+  font: inherit; font-weight: 500; cursor: pointer; border-radius: calc(var(--radius) * 0.3); align-self: flex-start;
   padding: calc(var(--gap-unit) * 1.1) calc(var(--gap-unit) * 2); border: 1px solid var(--line);
   transition: background var(--dur) ease, border-color var(--dur) ease, transform var(--dur) ease;
 }
 .f-button.is-quiet { background: transparent; color: var(--fg); }
 .f-button.is-quiet:hover { background: var(--soft); }
-.f-button.is-primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
-.f-button.is-primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--fg)); }
+.f-button.is-primary { background: var(--fg); color: var(--bg); border-color: transparent; }
+.f-button.is-primary:hover { background: color-mix(in srgb, var(--fg) 82%, var(--accent)); }
 .f-button:active { transform: translateY(1px); }
 .f-button:disabled { opacity: 0.5; cursor: default; }
 

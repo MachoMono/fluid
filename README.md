@@ -17,7 +17,11 @@ design principle, not a visual theme.
   instead of jumping.
 - For anything the node vocabulary cannot express, the agent can write a sandboxed mini-page (`html` node) that
   talks back through `postMessage`.
-- Rest is the default: no `ui`, just a place to speak. Every earlier form can be flowed back to (↩).
+- Rest is the default: no `ui`, just a place to speak. Every earlier form can be flowed back to with Back.
+- **Depth.** The AG-UI machinery is hidden by default. Dive under the surface to see the raw event stream, the shared
+  state, and the spec of any part of the interface. Press Alt+D or use the Depth button for the whole surface,
+  hold Alt and click a part to dive into just that part, or pinch in on a trackpad. Esc, the "Back to the surface"
+  button, or pinching out brings you back. The zoom can be reversed at any moment.
 
 ## Run it
 
@@ -35,7 +39,9 @@ Claude account, so do not expose the port.
 
 ```
 agent/server.py        the agent and the prompt that defines the node vocabulary
-web/src/main.js        shell: AG-UI connection, morphing, history, voice input
+web/src/main.js        shell: AG-UI connection, morphing, history, voice input, dive wiring
+web/src/dive.js        the zoom between the surface and the depths (Web Animations, reversible)
+web/src/inspector.js   the depth view: event stream, shared state, node spec
 web/src/render.js      renders the agent's node tree safely (style whitelist, sandboxed html)
 web/src/components.css theme variables and component styles
 ```

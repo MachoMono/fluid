@@ -6,21 +6,28 @@
   <title>Fluid</title>
 </head>
 <body>
-  <main id="surface" aria-live="polite"></main>
-  <section id="still">
-    <p id="still-line">Say what you need.</p>
-    <div id="suggest"></div>
-  </section>
-  <div id="whisper" role="status"></div>
-  <form id="intent" autocomplete="off">
-    <button type="button" id="back" title="Flow back to the previous form" aria-label="Previous form" disabled>↩</button>
-    <input id="say" type="text" placeholder="Say what you need" aria-label="Say what you need">
-    <button type="button" id="mic" title="Speak" aria-label="Speak" hidden>●</button>
-    <button type="submit" id="go">Flow</button>
-    <button type="button" id="stop" hidden>Stop</button>
-    <button type="button" id="rest" title="Return to stillness" aria-label="Return to stillness">○</button>
-    <span id="pulse" aria-hidden="true"></span>
-  </form>
+  <div id="stage">
+    <main id="surface" aria-live="polite"></main>
+    <section id="still"><h1 id="question">What do you need?</h1></section>
+    <footer id="dock">
+      <svg id="line" viewBox="0 0 1000 24" preserveAspectRatio="none" aria-hidden="true"><path id="line-path" d="M0 12 H1000"/></svg>
+      <form id="intent" autocomplete="off">
+        <input id="say" type="text" placeholder="Type or speak" aria-label="Say what you need">
+        <button type="button" id="mic" hidden>Speak</button>
+        <button type="submit" id="go">Shape</button>
+        <button type="button" id="stop" hidden>Stop</button>
+      </form>
+      <div id="tools">
+        <button type="button" id="back" disabled title="Return to the previous form">Back</button>
+        <button type="button" id="rest" title="Clear the surface">Clear</button>
+        <button type="button" id="depth" title="See how this surface is made (Alt+D)">Depth</button>
+        <span id="whisper" role="status"></span>
+      </div>
+    </footer>
+    <nav id="below" aria-label="Ideas"><ul id="suggest"></ul></nav>
+  </div>
+  <div id="veil" aria-hidden="true"></div>
+  <div id="depths" role="dialog" aria-modal="true" aria-label="Under the surface" hidden></div>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

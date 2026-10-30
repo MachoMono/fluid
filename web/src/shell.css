@@ -1,78 +1,104 @@
-/* Shell: the only fixed things are the surface, the still prompt and the line you speak into. */
+/* Shell. One fixed element: the waterline. Above it, whatever the agent forms. Below it, you.
+   At rest the line sits at about 60% of the screen and the question rests on it; once something forms,
+   the line settles to the bottom and the form rises from it. */
 *, *::before, *::after { box-sizing: border-box; }
-html, body { min-height: 100%; }
+html { background: var(--bg); }
 body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--font-body, system-ui, sans-serif);
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-stack);
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
-#surface {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding-block: 28px 140px;
-  view-transition-name: surface;
+body.diving { overflow: hidden; }
+
+#stage {
+  min-height: 100dvh; display: flex; flex-direction: column;
+  padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(24px, env(safe-area-inset-right, 0px));
+  position: relative; z-index: 1;
 }
+#surface, #still, #dock, #below { width: 100%; max-width: 1100px; margin-inline: auto; }
+#surface { flex: 1; padding-block: 36px 28px; view-transition-name: surface; }
 body.resting #surface { display: none; }
 
-#still {
-  display: none;
-  position: fixed; inset: 0;
-  flex-direction: column; align-items: center; justify-content: center; gap: 22px;
-  padding-inline: 16px; padding-bottom: 90px;
-  text-align: center; pointer-events: none;
-}
+#still { display: none; flex: 1.5; align-items: flex-end; padding-bottom: clamp(14px, 2.6vh, 28px); }
 body.resting #still { display: flex; }
-#still-line { margin: 0; font-size: 1.5rem; letter-spacing: .01em; color: var(--quiet); }
-#suggest { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 640px; pointer-events: auto; }
-#suggest button {
-  font: inherit; font-size: .9rem; color: var(--quiet); background: transparent;
-  border: 1px solid color-mix(in srgb, var(--quiet) 35%, transparent);
-  border-radius: 999px; padding: 6px 14px; cursor: pointer;
+#question {
+  margin: 0; font-weight: 300; font-size: clamp(2.4rem, 6.4vw, 5rem); line-height: 1.02;
+  letter-spacing: -0.03em; text-wrap: balance; max-width: 14ch;
 }
-#suggest button:hover { color: var(--fg); border-color: var(--accent); }
 
+/* ---- the waterline and the dock ---- */
+#dock {
+  position: sticky; bottom: 0; background: var(--bg);
+  padding-bottom: max(14px, env(safe-area-inset-bottom, 0px)); view-transition-name: dock;
+}
+#dock::before { /* lets scrolled content sink into the line instead of being cut by it */
+  content: ""; position: absolute; left: 0; right: 0; bottom: 100%; height: 32px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+}
+body.resting #dock { position: static; }
+body.resting #dock::before { display: none; }
+#line { display: block; width: 100%; height: 24px; overflow: visible; }
+#line path { fill: none; stroke: var(--fg); stroke-opacity: .62; stroke-width: 1.25; vector-effect: non-scaling-stroke; transition: stroke .5s ease, stroke-opacity .5s ease; }
+body.flowing #line path { stroke: var(--accent); stroke-opacity: 1; }
+
+#intent { display: flex; align-items: baseline; gap: 6px; padding-top: 6px; }
+#say {
+  flex: 1; min-width: 0; font: inherit; font-size: 1.1rem; color: var(--fg); caret-color: var(--accent);
+  background: transparent; border: 0; outline: 0; padding: 8px 0; border-radius: 0;
+  transition: font-size .45s cubic-bezier(.22,.8,.3,1);
+}
+#say::placeholder { color: var(--quiet); opacity: .75; }
+body.resting #say { font-size: clamp(1.4rem, 3.2vw, 2.1rem); font-weight: 300; letter-spacing: -0.015em; }
+#intent button, #tools button {
+  font: inherit; color: var(--quiet); background: transparent; border: 0; padding: 6px 10px; cursor: pointer;
+  border-radius: 4px; transition: color .2s ease, background .2s ease;
+}
+#intent button:hover, #tools button:hover:not(:disabled) { color: var(--fg); }
+#tools button { font-size: .85rem; padding: 4px 8px; margin-left: -8px; }
+#tools button + button { margin-left: 0; }
+#tools button:disabled { opacity: .35; cursor: default; }
+#go { background: var(--fg) !important; color: var(--bg) !important; font-weight: 500; padding-inline: 16px !important; }
+#go:hover { background: color-mix(in srgb, var(--fg) 82%, var(--accent)) !important; }
+#mic.on { color: var(--bad) !important; }
+#say:focus-visible { outline: 0; }
+#intent:has(#say:focus-visible) { box-shadow: inset 0 -1px 0 var(--accent); }
+#intent button:focus-visible, #tools button:focus-visible, #suggest button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+#tools { display: flex; align-items: center; gap: 4px; min-height: 28px; }
 #whisper {
-  position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-  max-width: min(640px, calc(100vw - 32px));
-  padding: 6px 14px; border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  color: var(--quiet); font-size: .9rem;
-  opacity: 0; transition: opacity .6s ease; pointer-events: none;
+  flex: 1; text-align: right; color: var(--quiet); font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  opacity: 0; transition: opacity .6s ease;
 }
 #whisper.on { opacity: 1; }
 
-#intent {
-  position: fixed; left: 50%; transform: translateX(-50%);
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  width: min(640px, calc(100vw - 32px));
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 8px 6px 14px; border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--quiet) 30%, transparent);
-  box-shadow: 0 6px 30px color-mix(in srgb, var(--fg) 12%, transparent);
-  view-transition-name: intent;
+/* ---- ideas below the line, only at rest ---- */
+#below { display: none; }
+body.resting #below { display: block; flex: 1; padding-top: 18px; padding-bottom: 28px; }
+#suggest { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; justify-items: start; }
+#suggest button {
+  font: inherit; color: var(--quiet); background: none; border: 0; padding: 6px 0; cursor: pointer;
+  text-align: left; transition: color .2s ease, transform .35s cubic-bezier(.22,.8,.3,1);
 }
-#say {
-  flex: 1; min-width: 0; font: inherit; color: var(--fg);
-  background: transparent; border: 0; outline: 0; padding: 6px 4px;
+#suggest button:hover { color: var(--fg); transform: translateX(6px); }
+
+/* ---- looking closer: hold Alt over the surface to pick a part to dive into ---- */
+body.lens #surface, body.lens #surface * { cursor: zoom-in; }
+.lens-target { outline: 1.5px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
+
+/* ---- layers used by the dive ---- */
+#veil {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
+  background: radial-gradient(120% 90% at 50% 40%, #12332b 0%, #0a1613 55%, #060b0a 100%);
 }
-#intent button {
-  font: inherit; color: var(--quiet); background: transparent; border: 0;
-  border-radius: 999px; padding: 6px 10px; cursor: pointer;
+#depths { position: fixed; inset: 0; z-index: 3; overscroll-behavior: contain; will-change: transform, opacity, filter; }
+#depths[hidden] { display: none; }
+
+@media (max-width: 560px) {
+  #stage { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  #intent { flex-wrap: wrap; }
+  #say { flex-basis: 100%; }
 }
-#intent button:hover:not(:disabled) { color: var(--fg); }
-#intent button:disabled { opacity: .35; cursor: default; }
-#go { background: var(--accent) !important; color: var(--bg) !important; padding-inline: 16px !important; }
-#mic.on { color: #d33 !important; }
-#intent button:focus-visible, #say:focus-visible, #suggest button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-#intent:has(#say:focus-visible) { border-color: var(--accent); }
-#pulse {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--quiet); opacity: .25; margin-right: 4px;
+@media (prefers-reduced-motion: reduce) {
+  #say, #suggest button, #whisper, #line path { transition: none; }
 }
-body.flowing #pulse { opacity: 1; background: var(--accent); animation: breathe 1.4s ease-in-out infinite; }
-@keyframes breathe { 50% { transform: scale(1.6); opacity: .5; } }
-@media (prefers-reduced-motion: reduce) { body.flowing #pulse { animation: none; } #whisper { transition: none; } }
