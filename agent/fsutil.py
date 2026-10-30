@@ -74,3 +74,33 @@ def compose_md(meta: dict, body: str) -> str:
         out.append(f"{k}: {v}" if v else f"{k}:")
     out.append("---")
     return "\n".join(out) + "\n\n" + body.strip("\n") + "\n"
+
+
+def extra_folders() -> list[Path]:
+    """Folders the person has added, one per line, in ~/Fluid/folders.txt (blank lines and # comments are ignored).
+
+    Only the person edits this file; the agent cannot. Missing or non-directory entries are skipped.
+    """
+    try:
+        lines = (HOME / "folders.txt").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    out: list[Path] = []
+    for line in lines:
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        p = Path(line).expanduser()
+        try:
+            p = p.resolve()
+        except OSError:
+            continue
+        if p.is_dir() and p not in out:
+            out.append(p)
+    return out
+
+
+def allowed_roots() -> list[Path]:
+    """Where the agent may read, and where an approved command may run: ~/Fluid plus the added folders."""
+    HOME.mkdir(parents=True, exist_ok=True)
+    return [HOME.resolve(), *extra_folders()]

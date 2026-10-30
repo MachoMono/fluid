@@ -34,8 +34,12 @@ through the Claude Agent SDK.
 ./start.sh        # agent on 127.0.0.1:8020, web on http://127.0.0.1:5173
 ```
 
-The agent can search the web and nothing else (no files, no shell). It listens on localhost only. It acts on your
-Claude account, so do not expose the port.
+The agent can search the web and read files in your Fluid folder and any folders you add (one path per line in
+`~/Fluid/folders.txt`; only you edit that file). It cannot write files. It has no shell: when it wants to run a command
+it proposes one, the app shows the exact text on a card, and the command runs only when you press **Run**. Commands
+run as you, inside those folders, with a 30 second limit, and each one is logged to `~/Fluid/runs/commands.log`.
+`.env` files, SSH and cloud credentials are off limits even inside an allowed folder. The server listens on
+localhost only and acts on your Claude account, so do not expose the port.
 
 ## Look
 
@@ -68,10 +72,11 @@ you ask for a particular look. There is no theme toggle for now.
 ```
 agent/server.py        the agent and the prompt that defines the node vocabulary
 agent/shelf.py         the harbor: kept forms as plain files in ~/Fluid
-agent/playbooks.py     playbooks as markdown files; agent/work.py holds work items; agent/fsutil.py shared helpers
+agent/commands.py      runs one approved command; agent/playbooks.py     playbooks as markdown files; agent/work.py holds work items; agent/fsutil.py shared helpers
 web/src/main.js        shell: AG-UI connection, morphing, history, voice input, dive wiring
 web/src/dive.js        the zoom between Flow and Depth (Web Animations, reversible)
 web/src/inspector.js   the depth view: event stream, shared state, node spec
+web/src/approve.js     the approval card for commands the agent proposes
 web/src/docs.js        the short orientation text (Horizon, Flow, Depth and the terms)
 web/src/shelf.js       client for the harbor
 web/src/render.js      renders the agent's node tree safely (style whitelist, sandboxed html)

@@ -9,7 +9,8 @@ import { renderTree, applyTheme, setIframeFontCss } from './render.js'
 import { loadFontCss } from './fonts.js'
 import { createInspector } from './inspector.js'
 import { createDive } from './dive.js'
-import { shelf, playbooks, work, runs, profile, lines, suggestName, ago } from './shelf.js'
+import { shelf, playbooks, work, runs, profile, commands, lines, suggestName, ago } from './shelf.js'
+import { createApprover } from './approve.js'
 import { createHorizon } from './horizon.js'
 import { renderShelfInto } from './shelfview.js'
 import { createRise } from './rise.js'
@@ -274,6 +275,32 @@ function setRunning(on) {
   on ? waterline.swell() : waterline.settle()
 }
 
+// The agent has no shell. A command it proposes appears on the shell's own card, with the exact text; it runs only when
+// the person presses Run, and the output goes back to the agent as an event.
+let proposedSig = ''
+function proposeCommand(c) {
+  if (c && typeof c.cmd === 'string' && c.cmd.trim()) {
+    const sig = JSON.stringify(c)
+    if (sig !== proposedSig) { proposedSig = sig; approver.show(c) }
+  } else { proposedSig = ''; approver.hide() }
+}
+const whenIdle = async () => { for (let i = 0; i < 200 && running; i++) await new Promise((r) => setTimeout(r, 100)) }
+const approver = createApprover({
+  onRun: async (c) => {
+    whisper('Running…')
+    let r
+    try { r = await commands.run(c.cmd, c.cwd) } catch (e) { r = { exit: -1, stdout: '', stderr: e.message, timed_out: false } }
+    agent.state = { ...agent.state, command: null }; proposedSig = ''
+    await whenIdle()
+    send(`[ui-event] ${JSON.stringify({ action: 'command-result', payload: { cmd: c.cmd, exit: r.exit, stdout: r.stdout, stderr: r.stderr, timed_out: r.timed_out }, values: {} })}`)
+  },
+  onCancel: async (c) => {
+    agent.state = { ...agent.state, command: null }; proposedSig = ''
+    await whenIdle()
+    send(`[ui-event] ${JSON.stringify({ action: 'command-cancelled', payload: { cmd: c.cmd }, values: {} })}`)
+  },
+})
+
 function failRun(note) {
   if (!activeRun) return
   runs.patch(activeRun.id, { status: 'failed', note: String(note).slice(0, 300) }).then(refreshSignal).catch(() => {})
@@ -289,6 +316,7 @@ const subscriber = {
     if (!state) return
     if (activeRun && state.run && state.ui) runSurface = { runId: activeRun.id, ui: state.ui, theme: state.theme }
     adopt(state)
+    proposeCommand(state.command)
   },
   onRunFailed({ error }) { whisper(`Could not reach the agent: ${error?.message || error}`); failRun(error?.message || String(error)) },
   onRunErrorEvent({ event }) { whisper(event.message); failRun(event.message) },

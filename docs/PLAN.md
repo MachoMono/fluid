@@ -77,8 +77,11 @@ it: how the AG-UI adapter reports subagent activity.
 ## Security (local, single user)
 
 The server listens on localhost only, rejects changes from any other origin, and validates every file name. The agent
-has no file, shell or network tools beyond web search. The port must never be exposed, because it acts on the
-person's Claude account. Mini-pages the agent writes run in a sandbox with no network.
+can search the web and read files, but only in `~/Fluid` and folders the person lists in `~/Fluid/folders.txt`, and never
+`.env` files or credentials. It cannot write files and has no shell: a command it proposes is shown on the app's own
+card, runs only when the person presses Run, inside the allowed folders, with a time limit, and is logged. Web pages
+and files are data, never instructions. The port must never be exposed, because it acts on the person's Claude
+account. Mini-pages the agent writes run in a sandbox with no network.
 
 ## Phases
 

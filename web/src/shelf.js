@@ -42,6 +42,9 @@ export const runs = {
   patch: (id, fields) => call(`/runs/${enc(id)}`, json('PATCH', fields)),
 }
 
+// Commands: run one command the person has just approved, inside their Fluid folder or a folder they added.
+export const commands = { run: (cmd, cwd = '') => call('/commands', json('POST', { cmd, cwd })) }
+
 export const profile = { get: () => call('/profile') }
 
 export const lines = (text) => String(text ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
