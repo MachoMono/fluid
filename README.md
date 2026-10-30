@@ -13,8 +13,8 @@ design principle, not a visual theme.
   side, the Claude adapter `ag-ui-claude-sdk` on the agent side).
 - The interface is **shared state**: the agent writes `ui` (a tree of nodes), `theme` and `memory` with the
   adapter's `ag_ui_update_state` tool. The web client renders whatever is in `ui`.
-- Nodes keep stable ids, and the shell uses the View Transitions API so elements flow from one form to the next
-  instead of jumping.
+- Nodes keep stable ids. Nothing ever cuts: parts that stay glide to their new place, new parts rise out of the
+  waterline one after another, and parts that go sink away (View Transitions API, with a plain fade as fallback).
 - For anything the node vocabulary cannot express, the agent can write a sandboxed mini-page (`html` node) that
   talks back through `postMessage`.
 - Rest is the default: no `ui`, just a place to speak. Every earlier form can be flowed back to with Back.
@@ -35,13 +35,22 @@ through the Claude Agent SDK.
 The agent can search the web and nothing else (no files, no shell). It listens on localhost only. It acts on your
 Claude account, so do not expose the port.
 
+## Keeping things
+
+- **Keep** saves the current form to `~/Fluid/forms/` as one readable JSON file. At rest, your kept forms appear
+  under the line and open instantly, with no agent run. Remove asks twice before it deletes.
+- The agent never reads the shelf, so keeping things adds nothing to its context.
+- Set `FLUID_HOME` to keep the folder somewhere else.
+
 ## Layout
 
 ```
 agent/server.py        the agent and the prompt that defines the node vocabulary
+agent/shelf.py         the shelf: kept forms as plain files in ~/Fluid
 web/src/main.js        shell: AG-UI connection, morphing, history, voice input, dive wiring
 web/src/dive.js        the zoom between the surface and the depths (Web Animations, reversible)
 web/src/inspector.js   the depth view: event stream, shared state, node spec
+web/src/shelf.js       client for the shelf
 web/src/render.js      renders the agent's node tree safely (style whitelist, sandboxed html)
 web/src/components.css theme variables and component styles
 ```

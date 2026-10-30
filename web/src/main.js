@@ -8,6 +8,7 @@ import { HttpAgent } from '@ag-ui/client'
 import { renderTree, applyTheme } from './render.js'
 import { createInspector } from './inspector.js'
 import { createDive } from './dive.js'
+import { shelf, suggestName, ago } from './shelf.js'
 import './components.css'
 import './shell.css'
 
@@ -58,15 +59,47 @@ inspector.onSurface(surface)
 
 // ---- morphing -------------------------------------------------------------------------------------------
 
+// Every change of surface flows: new parts rise out of the waterline one after another, parts that stay glide to
+// their new place, parts that go sink away. The browser does the morph; the shell only sets the order.
+let staggerStyle = null
+const shown = (id) => getComputedStyle($(id)).display !== 'none'
+const partNames = () => [
+  ...(shown('still') ? ['still'] : []),
+  ...[...$('surface').querySelectorAll('[data-id]')].map((e) => e.style.viewTransitionName).filter(Boolean),
+  ...(shown('below') ? ['below'] : []),
+]
+
+function stagger(before, after) {
+  const had = new Set(before), has = new Set(after)
+  const leaving = before.filter((n) => !has.has(n))
+  const wait = leaving.length ? 300 : 100          // new parts begin as the old ones clear, so the two never crowd each other
+  const rules = [
+    ...after.filter((n) => !had.has(n)).map((n, i) => `::view-transition-new(${n}):only-child{animation-delay:${wait + Math.min(i * 45, 450)}ms !important}`),
+    ...leaving.map((n, i) => `::view-transition-old(${n}):only-child{animation-delay:${Math.min(i * 20, 120)}ms !important}`),
+  ]
+  staggerStyle?.remove()
+  staggerStyle = Object.assign(document.createElement('style'), { textContent: rules.join('\n') })
+  document.head.append(staggerStyle)
+}
+
 function show(ui, theme) {
+  const before = partNames()
   const run = () => {
     applyTheme(root, theme || {})
     renderTree($('surface'), ui, api)
     document.body.classList.toggle('resting', !ui)
+    syncKeep()
   }
-  // Skip the page-wide transition while the depths are open: nothing visible would morph, only the cost.
-  if (document.startViewTransition && !reduceMotion() && !dive.isOpen()) document.startViewTransition(run)
-  else run()
+  if (!reduceMotion() && !dive.isOpen()) {
+    if (document.startViewTransition) {
+      const t = document.startViewTransition(() => { run(); stagger(before, partNames()) })
+      t.finished.finally(() => { staggerStyle?.remove(); staggerStyle = null })
+    } else {                                    // no view transitions in this browser: a plain rise
+      run()
+      $('surface').animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 600, easing: 'cubic-bezier(0.22, 0.8, 0.3, 1)' })
+    }
+  } else run()                                  // reduced motion, or the depths are open and nothing visible would move
 }
 
 function persist(state) {
@@ -196,15 +229,120 @@ $('back').addEventListener('click', flowBack)
 $('rest').addEventListener('click', clear)
 $('depth').addEventListener('click', () => diveIn(null))
 
+// ---- the shelf: forms you kept. Plain names under the line at rest; suggestions only while the shelf is empty ----
+
 const suggestions = ['A calm focus timer', 'Plan a week in Lisbon', 'Teach me the circle of fifths', 'Think through a decision with me']
-$('suggest').replaceChildren(...suggestions.map((s) => {
-  const li = document.createElement('li')
-  const b = document.createElement('button')
-  b.type = 'button'; b.textContent = s
-  b.addEventListener('click', () => { if (!running) send(s) })
-  li.append(b)
-  return li
-}))
+let kept = []             // [{id, name, kept}] newest first
+let keptSig = null        // signature of the form that was just kept, so the button can say Kept
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag)
+  if (cls) n.className = cls
+  if (text != null) n.textContent = text
+  return n
+}
+
+function renderShelf() {
+  const ul = $('suggest')
+  ul.classList.toggle('kept', kept.length > 0)
+  if (!kept.length) {
+    ul.replaceChildren(...suggestions.map((s) => {
+      const li = el('li'), b = el('button', '', s)
+      b.type = 'button'
+      b.addEventListener('click', () => { if (!running) send(s) })
+      li.append(b)
+      return li
+    }))
+    return
+  }
+  ul.replaceChildren(...kept.slice(0, 6).map((f) => {
+    const li = el('li')
+    const open = el('button', 'kept-open', f.name); open.type = 'button'
+    open.addEventListener('click', () => openKept(f))
+    const date = el('span', 'kept-date', ago(f.kept))
+    const rm = el('button', 'kept-remove', 'Remove'); rm.type = 'button'
+    let armed = 0
+    rm.addEventListener('click', async () => {
+      if (!armed) {                                   // first press asks, second press removes
+        rm.textContent = 'Remove it?'
+        armed = setTimeout(() => { rm.textContent = 'Remove'; armed = 0 }, 3500)
+        return
+      }
+      clearTimeout(armed)
+      try {
+        await shelf.remove(f.id)
+        li.classList.add('leaving')
+        await new Promise((r) => setTimeout(r, reduceMotion() ? 0 : 290))
+        await refreshShelf(); whisper(`Removed “${f.name}”.`)
+      }
+      catch (e) { whisper(e.message) }
+    })
+    rm.addEventListener('blur', () => { clearTimeout(armed); armed = 0; rm.textContent = 'Remove' })
+    li.append(open, date, rm)
+    return li
+  }))
+}
+
+async function refreshShelf() {
+  try { kept = await shelf.list() } catch { kept = [] }   // agent not running: the shelf simply stays empty
+  renderShelf()
+}
+
+async function openKept(f) {
+  if (running) return
+  try {
+    const form = await shelf.open(f.id)
+    const next = { ...agent.state, ui: form.ui, theme: form.theme || {} }
+    agent.state = next
+    adopt(next)
+    keptSig = current                                  // it is already on the shelf
+    syncKeep()
+    whisper(`Opened “${form.name}”.`)
+  } catch (e) { whisper(e.message) }
+}
+
+// Keep appears only when there is something to keep, and asks for a name right where the whisper sits.
+function syncKeep() {
+  const has = !document.body.classList.contains('resting')
+  const btn = $('keep')
+  btn.hidden = !has || !$('keepform').hidden
+  const already = has && keptSig === current
+  btn.textContent = already ? 'Kept' : 'Keep'
+  btn.disabled = already
+  if (!has) closeKeep()
+}
+function openKeep() {
+  const s = JSON.parse(current)
+  $('keepname').value = suggestName(s.ui, s.theme)
+  $('keepform').hidden = false
+  $('keep').hidden = true
+  $('whisper').hidden = true
+  $('keepname').focus(); $('keepname').select()
+}
+function closeKeep({ refocus = false } = {}) {
+  if ($('keepform').hidden) return
+  $('keepform').hidden = true
+  $('whisper').hidden = false
+  syncKeep()
+  if (refocus) $('keep').focus()
+}
+$('keep').addEventListener('click', openKeep)
+$('keepcancel').addEventListener('click', () => closeKeep({ refocus: true }))
+$('keepname').addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeKeep({ refocus: true }) } })
+$('keepform').addEventListener('submit', async (e) => {
+  e.preventDefault()
+  const name = $('keepname').value.trim()
+  if (!name) return
+  const { ui, theme } = JSON.parse(current)
+  if (!ui) return
+  try {
+    const saved = await shelf.keep(name, ui, theme)
+    keptSig = current
+    closeKeep()
+    await refreshShelf()
+    whisper(`Kept as “${saved.name}”.`)
+  } catch (err) { whisper(err.message) }
+})
 
 // ---- going deeper: Alt+D, Alt+click on a part, pinch in; Esc or pinch out to come back ------------------
 
@@ -265,3 +403,4 @@ if (Rec) {
 
 inspector.setState(agent.state ?? saved)
 show(saved.ui ?? null, saved.theme ?? {})
+refreshShelf()

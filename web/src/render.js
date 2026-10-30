@@ -499,7 +499,13 @@ const BUILDERS = {
     f.setAttribute('sandbox', 'allow-scripts');
     // The mini-page may run scripts but gets no network: the CSP meta comes first so page content cannot override it.
     const csp = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data:; font-src data:; media-src data:">';
-    f.setAttribute('srcdoc', csp + (typeof node.html === 'string' ? node.html : ''));
+    // Hand the mini-page the live theme so it matches the surface instead of bringing its own palette.
+    const cs = getComputedStyle(document.documentElement);
+    const v = (n) => cs.getPropertyValue(n).trim().replace(/[<>;{}]/g, '');
+    const base = '<style>:root{--bg:' + v('--bg') + ';--fg:' + v('--fg') + ';--accent:' + v('--accent') + ';--surface:' + v('--surface') +
+      ';--quiet:' + v('--quiet') + ';--font-stack:' + v('--font-stack').replace(/"/g, "'") + '}' +
+      'html,body{margin:0;background:transparent;color:var(--fg);font-family:var(--font-stack)}</style>';
+    f.setAttribute('srcdoc', csp + base + (typeof node.html === 'string' ? node.html : ''));
     f.setAttribute('title', typeof node.title === 'string' ? node.title : 'Embedded content');
     f.style.height = num(node.height, 320) + 'px';
     f.style.border = 'none';

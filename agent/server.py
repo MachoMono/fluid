@@ -12,6 +12,8 @@ from ag_ui_claude_sdk import ClaudeAgentAdapter, add_claude_fastapi_endpoint
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from shelf import router as shelf_router
+
 PROMPT = """You are Fluid, the agent inside an interface that has no fixed shape.
 There are no apps, pages or menus. The person says what they need and you give the surface
 exactly the form, function and feel that need calls for. When the need changes, the surface
@@ -84,8 +86,13 @@ The "theme" object (all optional; set the whole object each time you change it):
   mode "light"|"dark", bg, fg, accent, surface, quiet (colors), radius (px), font
   ("sans"|"serif"|"mono"|"rounded"), density ("compact"|"cozy"|"airy"), motion ("none"|"calm"|"lively"),
   backdrop ("none"|"dots"|"grid"|"soft"), title (short text for the tab, optional).
-Choose theme to fit the need and the person: a focus timer is quiet and sparse, a trading view is
-dense, a bedtime story is soft. Do not default to the same look twice without reason.
+Light and airy is the rule: pale, softly tinted backgrounds (never pure white, never dark), plenty of
+space, dark ink, one calm accent; secondary (quiet) text must still read clearly, at least 4.5:1 against the
+background. Use mode "dark" ONLY if the person asks for dark or night. Within
+that, fit density and type to the need: a focus timer is quiet and sparse, a trading view is dense, a
+bedtime story is soft. Inside "html" nodes the page already defines the CSS variables --bg, --fg, --accent,
+--surface, --quiet and --font-stack from the current theme; write with color: var(--fg), background:
+transparent and var(--accent) so the mini-page matches the surface and never brings its own dark palette.
 
 Output budget: keep each "ui" tree as small as the need allows. Prefer one clear update per turn.
 After updating, reply with at most one short sentence, or nothing."""
@@ -115,6 +122,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 add_claude_fastapi_endpoint(app=app, adapter=adapter, path="/fluid")
+app.include_router(shelf_router)
 
 
 @app.get("/health")

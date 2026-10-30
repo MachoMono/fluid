@@ -1,14 +1,15 @@
 .depths-root {
-  --d-bg-top: #0b1210;
-  --d-bg-bot: #060a09;
-  --d-text: #dde6e1;
-  --d-quiet: #7f8d86;
-  --d-jade: #86d2b5;
-  --d-amber: #e0b562;
-  --d-violet: #b79df0;
-  --d-red: #e57f7c;
-  --d-line: rgba(221, 230, 225, .12);
-  --d-soft: rgba(221, 230, 225, .05);
+  /* The shallows: a little deeper than the surface so the dive still reads as going down, but light. */
+  --d-bg-top: #e2eae5;
+  --d-bg-bot: #ccdad3;
+  --d-text: #16201c;
+  --d-quiet: #55645d;
+  --d-jade: #1e6b57;
+  --d-amber: #8a5a00;
+  --d-violet: #6b4bb0;
+  --d-red: #b5473f;
+  --d-line: rgba(22, 32, 28, .14);
+  --d-soft: rgba(22, 32, 28, .05);
   --d-ui: "Zen Kaku Gothic New", ui-sans-serif, system-ui, sans-serif;
   --d-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
@@ -20,7 +21,7 @@
   overflow: hidden;
   color: var(--d-text);
   background: linear-gradient(to bottom, var(--d-bg-top), var(--d-bg-bot));
-  color-scheme: dark;
+  color-scheme: light;
   font-family: var(--d-ui);
   font-size: 14px;
   line-height: 1.5;
@@ -71,7 +72,7 @@
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
   margin: 0 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--d-line);
   font-weight: 400; font-size: 13px; position: sticky; top: -8px; z-index: 1;
-  background: #090f0d;
+  background: var(--d-bg-top);
 }
 .depths-root .dp-run-name { font-family: var(--d-mono); font-size: 12px; }
 .depths-root .dp-run-status { color: var(--d-quiet); }
@@ -87,7 +88,7 @@
   transition: background 140ms;
 }
 .depths-root .dp-row:hover { background: var(--d-soft); }
-.depths-root .dp-row[aria-pressed="true"] { background: rgba(134, 210, 181, .1); box-shadow: inset 2px 0 0 var(--d-jade); }
+.depths-root .dp-row[aria-pressed="true"] { background: rgba(30, 107, 87, .1); box-shadow: inset 2px 0 0 var(--d-jade); }
 .depths-root .dp-time { font: 400 12px var(--d-mono); font-variant-numeric: tabular-nums; color: var(--d-quiet); text-align: right; white-space: nowrap; }
 .depths-root .dp-type { font: 500 12px var(--d-mono); color: var(--d-text); white-space: nowrap; }
 .depths-root .fam-text .dp-type { color: var(--d-jade); }
@@ -117,7 +118,7 @@
   flex: none; background: none; border: 1px solid var(--d-line); border-radius: 999px;
   padding: 4px 14px; cursor: pointer; font-size: 12px; color: var(--d-text); transition: border-color 160ms, background 160ms;
 }
-.depths-root .dp-copy:hover { border-color: var(--d-jade); background: rgba(134, 210, 181, .08); }
+.depths-root .dp-copy:hover { border-color: var(--d-jade); background: rgba(30, 107, 87, .08); }
 .depths-root .dp-panel-body { flex: 1; min-height: 0; padding: 4px clamp(16px, 3vw, 40px) 32px; }
 
 /* shape facts */
@@ -160,7 +161,7 @@
 .depths-root .dp-statekey { margin-bottom: 6px; border-radius: 6px; }
 .depths-root .dp-statekey.flash { animation: dp-flash 1400ms ease-out; }
 @keyframes dp-flash {
-  from { background: rgba(134, 210, 181, .22); }
+  from { background: rgba(30, 107, 87, .2); }
   to { background: transparent; }
 }
 

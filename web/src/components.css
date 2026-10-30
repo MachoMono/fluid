@@ -1,18 +1,18 @@
 /* Fluid node components. Driven entirely by custom properties set on the root. */
 
-/* Resting palette: stone with a green cast, ink, and one jade accent. Light by default, night water when the
-   system is dark; the agent's theme overrides any of it. */
+/* Resting palette: stone with a green cast, ink, and one jade accent. Always light by default, whatever the
+   system setting; a theme can ask for dark. */
 :root {
-  --bg: #e3e8e4;
+  --bg: #eaefeb;
   --fg: #16201c;
   --accent: #1e6b57;
-  --surface: #f1f4f1;
+  --surface: #f6f8f6;
   --quiet: #66736c;
   --radius: 14px;
   --gap-unit: 8px;
   --pad-unit: 16px;
   --dur: 180ms;
-  --morph-ms: 450ms;
+  --morph-ms: 720ms;
   --font-stack: "Zen Kaku Gothic New", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light;
   background-color: var(--bg);
@@ -27,17 +27,6 @@
   --surface: #151d1a;
   --quiet: #7f8d86;
   color-scheme: dark;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-mode]) {
-    --bg: #0e1412;
-    --fg: #dde6e1;
-    --accent: #86d2b5;
-    --surface: #151d1a;
-    --quiet: #7f8d86;
-    --good: #6cc38a; --bad: #e57f7c; --warn: #e0b562;
-    color-scheme: dark;
-  }
 }
 
 /* Derived tokens, resolved where the theme variables live. */
@@ -64,8 +53,8 @@
 [data-density="airy"] { --gap-unit: 14px; --pad-unit: 26px; }
 
 [data-motion="none"] { --dur: 0ms; --morph-ms: 0ms; }
-[data-motion="calm"] { --dur: 180ms; --morph-ms: 450ms; }
-[data-motion="lively"] { --dur: 280ms; --morph-ms: 700ms; }
+[data-motion="calm"] { --dur: 180ms; --morph-ms: 720ms; }
+[data-motion="lively"] { --dur: 280ms; --morph-ms: 1000ms; }
 
 [data-backdrop="dots"] {
   background-image: radial-gradient(color-mix(in srgb, var(--fg) 18%, transparent) 1px, transparent 1.5px);
@@ -246,17 +235,44 @@ textarea.f-control { resize: vertical; line-height: 1.45; }
 }
 .f-control:focus { border-color: var(--accent); }
 
-/* ---------- view transitions ---------- */
+/* ---------- flowing: things arrive out of the waterline and leave back into it ---------- */
 
+:root { --flow-ease: cubic-bezier(0.22, 0.8, 0.3, 1); }
+
+/* The page never cuts: a change of palette settles over most of a second. */
+html, body { transition: background-color 800ms ease, color 800ms ease; }
+
+/* Only the named parts of the interface move; the page behind them is the live page, not a snapshot. */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+/* Parts that persist glide from where they were to where they are, and blend into their new look. */
 ::view-transition-group(*) {
-  animation-duration: var(--morph-ms, 450ms);
-  animation-timing-function: cubic-bezier(0.22, 0.8, 0.3, 1);
+  animation-duration: var(--morph-ms, 720ms);
+  animation-timing-function: var(--flow-ease);
 }
 ::view-transition-old(*), ::view-transition-new(*) {
-  animation-duration: var(--morph-ms, 450ms);
+  animation-duration: var(--morph-ms, 720ms);
   animation-timing-function: ease;
   mix-blend-mode: normal;
 }
+
+/* Parts that are new rise into focus; parts that go sink away. Stagger delays are added per part by the shell. */
+::view-transition-new(*):only-child { animation: flow-in var(--morph-ms, 720ms) var(--flow-ease) both; }
+::view-transition-old(*):only-child { animation: flow-out calc(var(--morph-ms, 720ms) * 0.45) cubic-bezier(0.4, 0, 0.7, 0.2) both; }
+@keyframes flow-in {
+  from { opacity: 0; transform: translateY(22px) scale(0.985); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes flow-out {
+  to { opacity: 0; transform: translateY(10px) scale(0.992); filter: blur(4px); }
+}
+/* The dock's contents differ between rest and content, so they hand over almost at once (no double image)
+   while the dock itself glides the full distance. */
+::view-transition-old(dock) { animation: fade-out calc(var(--morph-ms, 720ms) * 0.18) ease-in both; }
+::view-transition-new(dock) { animation: fade-in calc(var(--morph-ms, 720ms) * 0.3) ease-out calc(var(--morph-ms, 720ms) * 0.1) both; }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
