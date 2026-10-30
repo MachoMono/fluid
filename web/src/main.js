@@ -86,17 +86,29 @@ async function refreshSignal() {
 
 const horizon = createHorizon($('horizon'), {
   onSurface: closeHorizon,
-  onWork: async (id) => { closeHorizon(); await showWorkItem(id) },
+  // Each item is placed on the surface while the Horizon is still open, so it is already there when you come down.
+  onWork: async (id) => { await showWorkItem(id); closeHorizon() },
   onRun: async (r) => {
+    if (r.status !== 'failed' && activeRun?.id === r.id && runSurface?.runId === r.id) {
+      place(runSurface.ui, runSurface.theme)             // still running: bring its own surface back
+    } else {
+      placeRunNote(r)                                    // failed, or left over from an earlier session
+      runs.patch(r.id, { dismissed: true }).then(refreshSignal).catch(() => {})
+    }
     closeHorizon()
-    if (r.status === 'failed') { whisper(`“${r.playbook}” failed${r.note ? `: ${r.note}` : ''}.`); await runs.patch(r.id, { dismissed: true }).catch(() => {}); refreshSignal(); return }
-    if (activeRun?.id === r.id) return                   // the run is still on the surface: just come back down to it
-    await runs.patch(r.id, { dismissed: true }).catch(() => {})   // it belonged to an earlier session: start it again
-    refreshSignal()
-    if (r.playbook_id) runPlaybook({ id: r.playbook_id })
   },
   onDismiss: async (id) => { await runs.patch(id, { dismissed: true }).catch(() => {}); refreshHorizon(); refreshSignal() },
 })
+
+// What a failed or interrupted run shows when you open it: what happened, and a way to start again.
+function placeRunNote(r) {
+  const failed = r.status === 'failed'
+  place({ id: 'run-note', type: 'stack', gap: 18, children: [
+    { id: 'rn-h', type: 'heading', level: 1, text: failed ? `${r.playbook} did not finish` : `${r.playbook} was interrupted` },
+    { id: 'rn-t', type: 'text', tone: 'quiet', text: failed ? (r.note || 'It stopped with an error.') : 'The page was reloaded while it waited for you, so it could not pick up where it left off.' },
+    ...(r.playbook_id ? [{ id: 'rn-b', type: 'button', label: 'Run it again', variant: 'primary', action: 'fluid:rerun', payload: { id: r.playbook_id } }] : []),
+  ] })
+}
 
 function diveIn(el) {
   if (layered()) return
@@ -256,7 +268,11 @@ const subscriber = {
   onEvent({ event }) { inspector.record(event) },
   onRunStartedEvent() { spoken = ''; whisper('') },
   onTextMessageContentEvent({ event }) { spoken += event.delta; whisper(spoken) },
-  onStateChanged({ state }) { if (state) adopt(state) },
+  onStateChanged({ state }) {
+    if (!state) return
+    if (activeRun && state.run && state.ui) runSurface = { runId: activeRun.id, ui: state.ui, theme: state.theme }
+    adopt(state)
+  },
   onRunFailed({ error }) { whisper(`Could not reach the agent: ${error?.message || error}`); failRun(error?.message || String(error)) },
   onRunErrorEvent({ event }) { whisper(event.message); failRun(event.message) },
 }
@@ -293,6 +309,7 @@ const api = {
 let activePlaybook = ''   // name of the playbook being run, recorded on the work item it produces
 let activeRun = null      // the run record for it, kept current from the agent's `run` state
 let runSig = ''
+let runSurface = null     // the last surface the agent drew for that run, so it can be brought back
 
 async function runPlaybook(p) {
   if (running) return
@@ -312,8 +329,8 @@ function draftPlaybook(nameHint) {
 }
 
 // Put a surface built here, not by the agent, on screen; the agent sees it as the current state.
-function place(ui) {
-  const next = { ...agent.state, ui, theme: agent.state?.theme ?? {} }
+function place(ui, theme) {
+  const next = { ...agent.state, ui, theme: theme ?? agent.state?.theme ?? {} }
   agent.state = next
   adopt(next)
 }
@@ -353,7 +370,8 @@ async function localAction(action, payload) {
       })
       await refreshShelf()
       whisper(`Saved the playbook “${saved.name}”. It is on the main screen.`)
-    } else if (action === 'fluid:open-work') await showWorkItem(payload?.id)
+    } else if (action === 'fluid:rerun') await runPlaybook({ id: payload?.id })
+    else if (action === 'fluid:open-work') await showWorkItem(payload?.id)
     else if (action === 'fluid:work-status') { await work.status(payload.id, payload.status); await showWorkItem(payload.id) }
   } catch (e) { whisper(e.message) }
 }
