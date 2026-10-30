@@ -37,9 +37,12 @@ through the Claude Agent SDK.
 The agent can search the web and nothing else (no files, no shell). It listens on localhost only. It acts on your
 Claude account, so do not expose the port.
 
-## Tone
+## The gauge and tone
 
-The droplet in the top-right corner, the same on every layer, switches the whole interface to a soft water blue (the Depth view with
+A quiet strip on the right edge shows which layer you are in (Horizon, Flow, Depth) and moves you between them. Below the
+marks are the tone control and a book that explains the layers.
+
+The water-level circle in the gauge on the right edge, the same on every layer, switches the whole interface to a soft water blue (the Depth view with
 it). It is a personal preference, kept in the browser, and it overrides whatever palette the agent chose. Press it
 again to return to the stone default.
 

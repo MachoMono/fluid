@@ -135,20 +135,6 @@ body.resting #below { display: block; flex: 1; padding-top: 18px; padding-bottom
 body.lens #surface, body.lens #surface * { cursor: zoom-in; }
 .lens-target { outline: 1.5px solid var(--accent); outline-offset: 4px; border-radius: 4px; }
 
-/* ---- the tone control: one droplet in the corner, above every layer; it fills with water when blue is on ---- */
-.tone-toggle {
-  position: fixed; top: max(14px, env(safe-area-inset-top, 0px)); right: max(18px, env(safe-area-inset-right, 0px)); z-index: 20;
-  width: 36px; height: 36px; border-radius: 50%; border: 0; padding: 0; display: grid; place-items: center; cursor: pointer;
-  color: var(--quiet); background: color-mix(in srgb, var(--fg) 6%, transparent);
-  transition: background 300ms ease, color 300ms ease, transform 300ms var(--flow-ease, ease);
-}
-.tone-toggle:hover { background: color-mix(in srgb, var(--fg) 11%, transparent); color: var(--fg); transform: translateY(-1px); }
-.tone-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.tone-toggle .drop-fill { transform: translateY(100%); transition: transform 1000ms cubic-bezier(.22, .8, .3, 1); }
-.tone-toggle[aria-pressed="true"] { color: var(--accent); }
-.tone-toggle[aria-pressed="true"] .drop-fill { transform: translateY(0); }
-@media (prefers-reduced-motion: reduce) { .tone-toggle, .tone-toggle .drop-fill { transition: none; } }
-
 /* ---- layers used by the dive ---- */
 #veil {
   position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;

@@ -3,6 +3,7 @@
 import './horizon.css'
 import { ago } from './shelf.js'
 import { renderShelfInto } from './shelfview.js'
+import { buildDocs } from './docs.js'
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag)
@@ -30,7 +31,10 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
   form.autocomplete = 'off'
   const field = el('div', 'hz-field')
   const say = el('input', 'hz-say')
-  say.type = 'text'; say.id = 'hz-say'; say.placeholder = 'Type here to continue in Flow'
+  say.type = 'text'; say.id = 'hz-say'
+  const narrow = matchMedia('(max-width: 560px)')
+  const wording = () => { say.placeholder = narrow.matches ? 'Type to begin' : 'Type here to continue in Flow' }
+  wording(); narrow.addEventListener('change', wording)
   say.setAttribute('aria-label', 'Say what you need, to continue in Flow')
   field.append(say)
   const mic = el('button', 'hz-mic', 'Speak'); mic.type = 'button'; mic.hidden = true; mic.id = 'hz-mic'
@@ -60,42 +64,9 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
   top.append(down)
   mount.append(top, hero, body)
 
-  // Orientation: the vocabulary here is Fluid's own, so it is explained in a few quiet lines. Shown in full to someone
-  // new (nothing needs them, nothing kept); otherwise it tucks into a small "?" in the corner.
-  const buildDocs = () => {
-    const root = el('div', 'hz-docs')
-    const grid = el('div', 'hz-layers')
-    for (const [name, text, keys] of [
-      ['Horizon', 'Home. See what needs you and what has arrived, and set out on something from your harbor.', 'Alt ↑ from Flow'],
-      ['Flow', 'Where you and the agent make things together. Say what you want and the screen takes shape.', 'Alt ↓ from Horizon'],
-      ['Depth', 'Beneath it all. The live events and state behind anything you see.', 'Alt ↓ from Flow'],
-    ]) {
-      const c = el('div', 'hz-layer')
-      c.append(el('h3', '', name), el('p', '', text), el('span', 'hz-keys', keys))
-      grid.append(c)
-    }
-    const terms = el('p', 'hz-terms')
-    terms.append(el('b', '', 'Playbook'), ' is a process you can run again. ', el('b', '', 'Arrivals'), ' are what a run produces. Your ',
-      el('b', '', 'harbor'), ' holds playbooks and anything you keep.')
-    root.append(grid, terms)
-    return root
-  }
+  // New here? The vocabulary is Fluid's own, so it is explained in full until something is kept or has arrived. After that
+  // the same text lives behind the book in the gauge.
   const inlineDocs = buildDocs()
-
-  const help = el('button', 'hz-help')
-  help.innerHTML = '<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M12 6.6C10.4 5.3 8.1 4.7 4.5 5v12c3.6-.3 5.9.3 7.5 1.6 1.6-1.3 3.9-1.9 7.5-1.6V5c-3.6-.3-5.9.3-7.5 1.6zM12 6.6v12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-  help.type = 'button'; help.hidden = true; help.setAttribute('aria-label', 'How Fluid works'); help.setAttribute('aria-expanded', 'false')
-  const pop = el('div', 'hz-pop'); pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'How Fluid works')
-  pop.append(buildDocs())
-  mount.append(help, pop)
-  const closePop = () => { pop.hidden = true; help.setAttribute('aria-expanded', 'false') }
-  help.addEventListener('click', () => {
-    const open = pop.hidden
-    pop.hidden = !open
-    help.setAttribute('aria-expanded', String(open))
-  })
-  document.addEventListener('pointerdown', (e) => { if (!pop.hidden && !pop.contains(e.target) && e.target !== help) closePop() })
-  mount.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { e.stopPropagation(); closePop(); help.focus() } })
 
   const section = (title, rows) => {
     const s = el('section', 'hz-section')
@@ -142,8 +113,6 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
       }
       const fresh = !needs.length && !results.length && !items.length
       if (fresh) parts.push(section('How Fluid works', [inlineDocs]))
-      help.hidden = fresh
-      if (fresh) closePop()
       body.replaceChildren(...parts)
     },
     attachMic() { return { mic, say } },

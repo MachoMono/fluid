@@ -13,6 +13,7 @@ import { shelf, playbooks, work, runs, profile, lines, suggestName, ago } from '
 import { createHorizon } from './horizon.js'
 import { renderShelfInto } from './shelfview.js'
 import { createRise } from './rise.js'
+import { createGauge } from './gauge.js'
 import './components.css'
 import './shell.css'
 
@@ -50,7 +51,7 @@ const inspector = createInspector($('depths'))
 const dive = createDive({
   stage: $('stage'), depths: $('depths'), veil: $('veil'),
   onOpened: () => inspector.focusFirst(),
-  onClosed: () => { returnFocus?.focus?.(); returnFocus = null },
+  onClosed: () => { returnFocus?.focus?.(); returnFocus = null; runPending() },
 })
 let returnFocus = null
 
@@ -58,17 +59,33 @@ let returnFocus = null
 const rise = createRise({
   stage: $('stage'), horizon: $('horizon'), haze: $('haze'),
   onOpened: () => horizon.focusFirst(),
-  onClosed: () => { (returnFocus?.isConnected ? returnFocus : $('say'))?.focus?.(); returnFocus = null; refreshSignal() },
+  onClosed: () => { (returnFocus?.isConnected ? returnFocus : $('say'))?.focus?.(); returnFocus = null; refreshSignal(); runPending() },
 })
 const layered = () => dive.isOpen() || rise.isOpen()
+
+// The gauge shows which layer you are in and moves you between them. Layers are adjacent, so a move of two steps
+// goes through Flow: it comes back first, then carries on when that has finished.
+const layerNow = () => (rise.isOpen() ? 'horizon' : dive.isOpen() ? 'depth' : 'flow')
+let pendingLayer = null
+const syncGauge = () => gauge.setLayer(layerNow())
+function runPending() { if (pendingLayer) { const t = pendingLayer; pendingLayer = null; goTo(t) } }
+function goTo(target) {
+  const cur = layerNow()
+  if (cur === target) return
+  if (target === 'flow') { if (cur === 'horizon') closeHorizon(); else surface(); return }
+  if (cur !== 'flow') { pendingLayer = target; if (cur === 'horizon') closeHorizon(); else surface(); return }
+  if (target === 'horizon') openHorizon(); else diveIn(null)
+}
+const gauge = createGauge($('gauge'), { onGo: goTo })
 
 async function openHorizon() {
   if (layered()) return
   returnFocus = document.activeElement
   await refreshHorizon()
   rise.open()
+  syncGauge()
 }
-const closeHorizon = () => rise.close()
+const closeHorizon = () => { rise.close(); syncGauge() }
 function goUp() { if (dive.isOpen()) surface(); else if (!rise.isOpen()) openHorizon() }
 function goDown() { if (rise.isOpen()) closeHorizon(); else if (!dive.isOpen()) diveIn(null) }
 
@@ -134,8 +151,9 @@ function diveIn(el) {
   inspector.setState(agent.state)
   inspector.show(nodeEl ? { nodeId: nodeEl.dataset.id } : {})
   dive.open(nodeEl ? nodeEl.getBoundingClientRect() : null)
+  syncGauge()
 }
-const surface = () => dive.close()
+const surface = () => { dive.close(); syncGauge() }
 inspector.onSurface(surface)
 
 // ---- morphing -------------------------------------------------------------------------------------------
@@ -599,5 +617,6 @@ refreshShelf()
 refreshSignal()
 
 // The app opens on the Horizon. Whatever was on the surface last time is still there, one step down in Flow.
-refreshHorizon().finally(() => { rise.openInstant(); root.classList.add('ready') })
+refreshHorizon().finally(() => { rise.openInstant(); syncGauge(); root.classList.add('ready') })
 loadFontCss().then(setIframeFontCss).catch(() => {})   // mini-pages fall back to the system font if this fails
+syncGauge()

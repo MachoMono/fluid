@@ -40,16 +40,7 @@
   <div id="haze" aria-hidden="true"></div>
   <div id="horizon" role="dialog" aria-modal="true" aria-label="Horizon" hidden></div>
   <div id="depths" role="dialog" aria-modal="true" aria-label="Under the surface" hidden></div>
-  <button type="button" id="tone" class="tone-toggle" aria-pressed="false" aria-label="Blue water tone" title="Blue water tone">
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-      <defs>
-        <clipPath id="drop-clip"><path d="M12 2.8c3.4 4.3 6 7.4 6 11a6 6 0 0 1-12 0c0-3.6 2.6-6.7 6-11z"/></clipPath>
-        <linearGradient id="drop-water" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7fc2ec"/><stop offset="1" stop-color="#3a8cc4"/></linearGradient>
-      </defs>
-      <g clip-path="url(#drop-clip)"><rect class="drop-fill" x="0" y="2" width="24" height="22" fill="url(#drop-water)"/></g>
-      <path d="M12 2.8c3.4 4.3 6 7.4 6 11a6 6 0 0 1-12 0c0-3.6 2.6-6.7 6-11z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-    </svg>
-  </button>
+  <nav id="gauge" aria-label="Layers and tools"></nav>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
