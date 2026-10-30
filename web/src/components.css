@@ -101,12 +101,12 @@
 .f-split > * { min-width: 0; }
 @media (max-width: 560px) { .f-split { grid-template-columns: 1fr !important; } }
 .f-spacer { flex: 0 0 auto; }
-.f-divider { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
+.f-divider { border: 0; height: 1px; margin: 0; width: 100%; background: linear-gradient(90deg, transparent, var(--line) 14%, var(--line) 86%, transparent); }
 
 /* ---------- tabs ---------- */
 
 .f-tabs { display: flex; flex-direction: column; gap: calc(var(--gap-unit) * 1.5); min-width: 0; }
-.f-tablist { display: flex; gap: var(--gap-unit); border-bottom: 1px solid var(--line); overflow-x: auto; }
+.f-tablist { display: flex; gap: var(--gap-unit); overflow-x: auto; }
 .f-tab {
   font: inherit; color: var(--quiet); background: none; border: 0; border-bottom: 2px solid transparent;
   padding: calc(var(--gap-unit) * 0.75) calc(var(--gap-unit) * 1.5); cursor: pointer; margin-bottom: -1px;
@@ -167,7 +167,7 @@ h3.f-heading { font-size: 1.1em; }
 .f-progress-fill { height: 100%; background: var(--accent); border-radius: inherit; transition: width calc(var(--dur) * 3) ease; }
 
 .f-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.f-list-li + .f-list-li { border-top: 1px solid var(--line); }
+.f-list { gap: 2px; }
 .f-list-item {
   display: flex; align-items: center; gap: calc(var(--gap-unit) * 1.5); width: 100%; box-sizing: border-box;
   padding: calc(var(--gap-unit) * 1.25) calc(var(--gap-unit) * 0.5); text-align: left; font: inherit; color: inherit;
@@ -184,7 +184,7 @@ button.f-list-item:hover { background: var(--soft); }
 .f-table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
 .f-table th, .f-table td { text-align: left; padding: calc(var(--gap-unit) * 1.1) calc(var(--gap-unit) * 1.5); white-space: nowrap; }
 .f-table th { color: var(--quiet); font-weight: 500; border-bottom: 1px solid var(--line); }
-.f-table tbody tr + tr td { border-top: 1px solid var(--line); }
+.f-table tbody tr:hover td { background: var(--soft); }
 
 .f-image { max-width: 100%; height: auto; border-radius: var(--radius); display: block; }
 .f-html { display: block; border: 0; width: 100%; border-radius: var(--radius); background: transparent; color-scheme: normal; }
@@ -204,7 +204,7 @@ button.f-list-item:hover { background: var(--soft); }
 .f-field { display: flex; flex-direction: column; gap: calc(var(--gap-unit) * 0.6); min-width: 0; }
 .f-label { font-size: 0.85em; color: var(--quiet); }
 .f-control {
-  font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line);
+  font: inherit; color: var(--fg); background: var(--soft); border: 1px solid transparent;
   border-radius: calc(var(--radius) * 0.3); padding: calc(var(--gap-unit) * 1.1) calc(var(--gap-unit) * 1.4);
   min-width: 0; box-sizing: border-box; width: 100%; transition: border-color var(--dur) ease, box-shadow var(--dur) ease;
 }

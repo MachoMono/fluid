@@ -26,7 +26,6 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
   const hero = el('div', 'hz-hero')
   const greeting = el('h1', 'hz-greeting')
   const status = el('p', 'hz-status')
-  const rule = el('div', 'hz-rule')
   const form = el('form', 'hz-ask')
   form.autocomplete = 'off'
   const field = el('div', 'hz-field')
@@ -46,7 +45,7 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
     form.classList.remove('has')
     onAsk(t)
   })
-  hero.append(greeting, status, rule, form)
+  hero.append(greeting, status, form)
 
   const hello = (name) => {
     const h = new Date().getHours()
