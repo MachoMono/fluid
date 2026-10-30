@@ -502,9 +502,9 @@ const BUILDERS = {
     // Hand the mini-page the live theme so it matches the surface instead of bringing its own palette.
     const cs = getComputedStyle(document.documentElement);
     const v = (n) => cs.getPropertyValue(n).trim().replace(/[<>;{}]/g, '');
-    const base = '<style>:root{--bg:' + v('--bg') + ';--fg:' + v('--fg') + ';--accent:' + v('--accent') + ';--surface:' + v('--surface') +
+    const base = '<style>' + iframeFontCss + '</style><style>:root{--bg:' + v('--bg') + ';--fg:' + v('--fg') + ';--accent:' + v('--accent') + ';--surface:' + v('--surface') +
       ';--quiet:' + v('--quiet') + ';--font-stack:' + v('--font-stack').replace(/"/g, "'") + '}' +
-      'html,body{margin:0;background:transparent;color:var(--fg);font-family:var(--font-stack)}</style>';
+      IFRAME_KIT + '</style>';
     f.setAttribute('srcdoc', csp + base + (typeof node.html === 'string' ? node.html : ''));
     f.setAttribute('title', typeof node.title === 'string' ? node.title : 'Embedded content');
     f.style.height = num(node.height, 320) + 'px';
@@ -658,6 +658,29 @@ function restoreFocus(container, saved) {
     }
   } catch { /* ignore */ }
 }
+
+// The house style every mini-page starts from, so plain semantic HTML already looks like it belongs. Pages add CSS
+// only for what is unique to them. Classes: .card .row .stack .center .big .muted .ghost (on buttons).
+let iframeFontCss = '';
+export function setIframeFontCss(css) { iframeFontCss = String(css || ''); }
+const IFRAME_KIT = '*{box-sizing:border-box}' +
+  'html,body{margin:0;background:transparent;color:var(--fg);font-family:var(--font-stack);line-height:1.55;-webkit-font-smoothing:antialiased}' +
+  'h1{font-size:2rem;font-weight:300;letter-spacing:-.02em;line-height:1.15;margin:0 0 .4em}' +
+  'h2{font-size:1.2rem;font-weight:500;letter-spacing:-.01em;margin:1.4em 0 .4em}h3{font-size:1rem;font-weight:500;margin:1.1em 0 .3em}' +
+  'p{margin:.6em 0}a{color:var(--accent)}strong{font-weight:500}.muted{color:var(--quiet)}' +
+  'button{font:inherit;font-weight:500;color:var(--bg);background:var(--fg);border:0;border-radius:6px;padding:.65em 1.3em;cursor:pointer;transition:opacity .2s ease}' +
+  'button:hover{opacity:.86}button:disabled{opacity:.4;cursor:default}' +
+  'button.ghost{background:transparent;color:var(--fg);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--fg) 20%,transparent)}' +
+  'input,select,textarea{font:inherit;color:var(--fg);background:color-mix(in srgb,var(--fg) 6%,transparent);border:1px solid transparent;border-radius:6px;padding:.65em .85em;width:100%}' +
+  'input::placeholder,textarea::placeholder{color:var(--quiet)}' +
+  'button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}' +
+  '.card{background:var(--surface);border-radius:14px;padding:1.3em}' +
+  '.row{display:flex;gap:.8em;align-items:center;flex-wrap:wrap}.stack{display:flex;flex-direction:column;gap:.9em}' +
+  '.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}' +
+  '.big{font-size:clamp(3rem,11vw,5.6rem);font-weight:300;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}' +
+  'hr{border:0;height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--fg) 16%,transparent) 14%,color-mix(in srgb,var(--fg) 16%,transparent) 86%,transparent)}' +
+  'table{border-collapse:collapse;width:100%}th{text-align:left;font-weight:500;color:var(--quiet)}td,th{padding:.55em .7em}' +
+  '@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}';
 
 export function renderTree(container, ui, api) {
   api = api || {};

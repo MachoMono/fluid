@@ -5,7 +5,8 @@ import '@fontsource/zen-kaku-gothic-new/latin-400.css'
 import '@fontsource/zen-kaku-gothic-new/latin-500.css'
 import '@fontsource/zen-kaku-gothic-new/latin-700.css'
 import { HttpAgent } from '@ag-ui/client'
-import { renderTree, applyTheme } from './render.js'
+import { renderTree, applyTheme, setIframeFontCss } from './render.js'
+import { loadFontCss } from './fonts.js'
 import { createInspector } from './inspector.js'
 import { createDive } from './dive.js'
 import { shelf, playbooks, work, runs, profile, lines, suggestName, ago } from './shelf.js'
@@ -81,7 +82,7 @@ async function refreshHorizon() {
     : needs.length ? `${needs.length} things need you.`
     : results.length === 1 ? 'One result is ready.'
     : results.length ? `${results.length} results are ready.`
-    : 'Nothing needs you.'
+    : 'Nothing needs you. Let’s make something.'
   horizon.refresh({ needs, results, items: shelfItems(), name: who.name, line })
 }
 
@@ -102,7 +103,6 @@ const horizon = createHorizon($('horizon'), {
     notify: (t) => whisper(t),
     calm: reduceMotion,
   },
-  suggestions: ['A calm focus timer', 'Plan a week in Lisbon', 'Teach me the circle of fifths', 'Think through a decision with me'],
   // Each item is placed on the surface while the Horizon is still open, so it is already there when you come down.
   onWork: async (id) => { await showWorkItem(id); closeHorizon() },
   onRun: async (r) => {
@@ -358,9 +358,11 @@ async function showWorkItem(id) {
   try {
     const w = await work.get(id)
     const done = w.status === 'done'
-    place({ id: 'wk', type: 'stack', gap: 18, children: [
-      { id: 'wk-h', type: 'heading', level: 1, text: w.title },
-      { id: 'wk-m', type: 'text', tone: 'quiet', text: [w.playbook || w.kind, ago(w.made), done ? 'done' : 'open'].filter(Boolean).join(' · ') },
+    place({ id: 'wk', type: 'stack', gap: 28, children: [
+      { id: 'wk-top', type: 'stack', gap: 10, children: [
+        { id: 'wk-h', type: 'heading', level: 1, text: w.title },
+        { id: 'wk-m', type: 'text', tone: 'quiet', text: [w.playbook || w.kind, ago(w.made), done ? 'done' : ''].filter(Boolean).join(' · ') },
+      ] },
       { id: 'wk-b', type: 'markdown', text: w.body },
       { id: 'wk-s', type: 'button', label: done ? 'Reopen' : 'Mark done', variant: done ? 'quiet' : 'primary',
         action: 'fluid:work-status', payload: { id: w.id, status: done ? 'open' : 'done' } },
@@ -412,7 +414,7 @@ $('up').addEventListener('click', () => (rise.isOpen() ? closeHorizon() : openHo
 function setTone(tone) {
   const apply = () => {
     if (tone === 'blue') root.dataset.tone = 'blue'; else delete root.dataset.tone
-    $('tone').setAttribute('aria-pressed', String(tone === 'blue'))
+    syncTone()
     store.set('fluid:tone', tone)
   }
   if (!reduceMotion() && document.startViewTransition && !dive.isOpen()) {
@@ -420,8 +422,12 @@ function setTone(tone) {
     document.startViewTransition(apply).finished.finally(() => root.classList.remove('tone-switching'))
   } else apply()
 }
-$('tone').setAttribute('aria-pressed', String(root.dataset.tone === 'blue'))
-$('tone').addEventListener('click', () => setTone(root.dataset.tone === 'blue' ? 'stone' : 'blue'))
+// The same toggle sits in every layer: Horizon, Flow's tools, and Depth.
+const depthTone = Object.assign(document.createElement('button'), { type: 'button', className: 'tone-toggle depth-tone', textContent: 'Blue', title: 'Blue water tone' })
+$('depths').append(depthTone)
+const syncTone = () => document.querySelectorAll('.tone-toggle').forEach((b) => b.setAttribute('aria-pressed', String(root.dataset.tone === 'blue')))
+syncTone()
+document.querySelectorAll('.tone-toggle').forEach((b) => b.addEventListener('click', () => setTone(root.dataset.tone === 'blue' ? 'stone' : 'blue')))
 
 // ---- the shelf: forms you kept. Plain names under the line at rest; suggestions only while the shelf is empty ----
 
@@ -596,3 +602,4 @@ refreshSignal()
 
 // The app opens on the Horizon. Whatever was on the surface last time is still there, one step down in Flow.
 refreshHorizon().finally(() => { rise.openInstant(); root.classList.add('ready') })
+loadFontCss().then(setIframeFontCss).catch(() => {})   // mini-pages fall back to the system font if this fails

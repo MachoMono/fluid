@@ -56,7 +56,47 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
   const body = el('div', 'hz-body')
   const shelfList = el('ul', 'hz-shelf shelf-list')
   shelfList.id = 'hz-shelf'
-  mount.append(down, hero, body)
+  const tone = el('button', 'tone-toggle', 'Blue')
+  tone.type = 'button'; tone.setAttribute('aria-pressed', 'false'); tone.title = 'Blue water tone'
+  const top = el('div', 'hz-top')
+  top.append(tone, down)
+  mount.append(top, hero, body)
+
+  // Orientation: the vocabulary here is Fluid's own, so it is explained in a few quiet lines. Shown in full to someone
+  // new (nothing needs them, nothing kept); otherwise it tucks into a small "?" in the corner.
+  const buildDocs = () => {
+    const root = el('div', 'hz-docs')
+    const grid = el('div', 'hz-layers')
+    for (const [name, text, keys] of [
+      ['Horizon', 'Home. See what needs you and what is ready, and start something you have saved.', 'Alt ↑ from Flow'],
+      ['Flow', 'Where you and the agent make things together. Say what you want and the screen takes shape.', 'Alt ↓ from Horizon'],
+      ['Depth', 'Beneath it all. The live events and state behind anything you see.', 'Alt ↓ from Flow'],
+    ]) {
+      const c = el('div', 'hz-layer')
+      c.append(el('h3', '', name), el('p', '', text), el('span', 'hz-keys', keys))
+      grid.append(c)
+    }
+    const terms = el('p', 'hz-terms')
+    terms.append(el('b', '', 'Playbook'), ' is a process you can run again. ', el('b', '', 'Results'), ' are what a run produces. Your ',
+      el('b', '', 'shelf'), ' holds playbooks and anything you keep.')
+    root.append(grid, terms)
+    return root
+  }
+  const inlineDocs = buildDocs()
+
+  const help = el('button', 'hz-help', '?')
+  help.type = 'button'; help.hidden = true; help.setAttribute('aria-label', 'How Fluid works'); help.setAttribute('aria-expanded', 'false')
+  const pop = el('div', 'hz-pop'); pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'How Fluid works')
+  pop.append(buildDocs())
+  mount.append(help, pop)
+  const closePop = () => { pop.hidden = true; help.setAttribute('aria-expanded', 'false') }
+  help.addEventListener('click', () => {
+    const open = pop.hidden
+    pop.hidden = !open
+    help.setAttribute('aria-expanded', String(open))
+  })
+  document.addEventListener('pointerdown', (e) => { if (!pop.hidden && !pop.contains(e.target) && e.target !== help) closePop() })
+  mount.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { e.stopPropagation(); closePop(); help.focus() } })
 
   const section = (title, rows) => {
     const s = el('section', 'hz-section')
@@ -97,8 +137,14 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
       if (results.length) {
         parts.push(section('Results', results.map((w) => row(w.title, `${w.playbook || w.kind} · ${ago(w.made)}`, () => onWork(w.id)))))
       }
-      renderShelfInto(shelfList, items, shelf, suggestions)
-      parts.push(items.length ? section('Shelf', [shelfList]) : shelfList)
+      if (items.length) {
+        renderShelfInto(shelfList, items, shelf, [])
+        parts.push(section('Shelf', [shelfList]))
+      }
+      const fresh = !needs.length && !results.length && !items.length
+      if (fresh) parts.push(section('How Fluid works', [inlineDocs]))
+      help.hidden = fresh
+      if (fresh) closePop()
       body.replaceChildren(...parts)
     },
     attachMic() { return { mic, say } },

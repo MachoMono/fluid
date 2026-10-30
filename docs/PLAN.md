@@ -98,6 +98,8 @@ person's Claude account. Mini-pages the agent writes run in a sandbox with no ne
 
 ## Open
 
+- The Horizon's greeting and status line are fixed templates for now. Once the companion exists and knows the person,
+  it should write that line, in the same calm voice.
 - How subagent activity is reported through the AG-UI adapter.
 - Where a background runner lives (a service started with the app, or a system timer) and how it shows usage.
 - Whether to keep full event logs per run, or only a summary and the notable events.
