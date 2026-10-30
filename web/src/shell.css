@@ -4,7 +4,9 @@
 *, *::before, *::after { box-sizing: border-box; }
 html { background: var(--bg); }
 body {
-  margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-stack);
+  margin: 0; color: var(--fg); font-family: var(--font-stack);
+  /* a faint light on the water, high in the page */
+  background: radial-gradient(130% 70% at 50% -8%, rgba(255, 255, 255, .5), transparent 62%), var(--bg);
   -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
 body.diving { overflow: hidden; }
@@ -82,10 +84,6 @@ body.resting #say { font-size: clamp(1.4rem, 3.2vw, 2.1rem); font-weight: 300; l
   outline: 2px solid var(--accent); outline-offset: 2px;
 }
 
-:root[data-tone="blue"] { --veil-1: #c6dcee; --veil-2: #aecbe2; --veil-3: #9bbcd7; }
-/* a faint light on the water, high in the page */
-:root[data-tone="blue"] body { background: radial-gradient(130% 70% at 50% -8%, rgba(255, 255, 255, .5), transparent 62%), var(--bg); }
-:root[data-tone="blue"] .depths-root { --d-bg-top: #c9dded; --d-bg-bot: #abc8df; --d-jade: #17698f; --d-text: #0f2230; --d-quiet: #3e596f; }
 
 #tools { display: flex; align-items: center; gap: 4px; min-height: 28px; }
 #whisper {
@@ -138,13 +136,12 @@ body.lens #surface, body.lens #surface * { cursor: zoom-in; }
 /* ---- layers used by the dive ---- */
 #veil {
   position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
-  background: radial-gradient(120% 90% at 50% 40%, var(--veil-1, #d3e2db) 0%, var(--veil-2, #bdd1c7) 55%, var(--veil-3, #adc4b9) 100%);
+  background: radial-gradient(120% 90% at 50% 40%, var(--veil-1, #c6dcee) 0%, var(--veil-2, #aecbe2) 55%, var(--veil-3, #9bbcd7) 100%);
 }
 #haze {
   position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
-  background: radial-gradient(120% 90% at 50% 20%, #fbfdfc 0%, #eef4f0 55%, #e2ebe6 100%);
+  background: radial-gradient(120% 90% at 50% 20%, #e8f2fa 0%, #cfe2f1 55%, #b4d0e6 100%);
 }
-:root[data-tone="blue"] #haze { background: radial-gradient(120% 90% at 50% 20%, #e8f2fa 0%, #cfe2f1 55%, #b4d0e6 100%); }
 #horizon { position: fixed; inset: 0; z-index: 3; will-change: transform, opacity, filter; }
 #horizon[hidden] { display: none; }
 #depths { position: fixed; inset: 0; z-index: 3; overscroll-behavior: contain; will-change: transform, opacity, filter; }

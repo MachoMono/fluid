@@ -17,7 +17,7 @@ by repeating itself. A playbook is that channel.
   person's button presses.
 - **Plain files on the person's machine.** Everything durable is readable markdown or JSON under `~/Fluid`.
 - **Nothing cuts.** Every change of view flows. One animation language across the whole app.
-- **Light and airy.** Stone by default, blue water as a tone. Dark only on request.
+- **Light and airy.** A soft water blue by default. Dark only on request.
 
 ## Three layers, one vertical axis
 
@@ -98,6 +98,10 @@ person's Claude account. Mini-pages the agent writes run in a sandbox with no ne
 
 ## Open
 
+- A small gauge on the right edge showing the current layer and moving between layers was built and set aside
+  (commit `eea3d3d`): the placement did not work. Revisit with a better home for it. Navigation today is the Horizon,
+  Flow and Depth buttons and Alt+Up / Alt+Down.
+- A theme toggle (stone and blue) was removed; blue is the default. Dark remains available when asked for.
 - The Horizon's greeting and status line are fixed templates for now. Once the companion exists and knows the person,
   it should write that line, in the same calm voice.
 - How subagent activity is reported through the AG-UI adapter.

@@ -37,14 +37,10 @@ through the Claude Agent SDK.
 The agent can search the web and nothing else (no files, no shell). It listens on localhost only. It acts on your
 Claude account, so do not expose the port.
 
-## The gauge and tone
+## Look
 
-A quiet strip on the right edge shows which layer you are in (Horizon, Flow, Depth) and moves you between them. Below the
-marks are the tone control and a book that explains the layers.
-
-The water-level circle in the gauge on the right edge, the same on every layer, switches the whole interface to a soft water blue (the Depth view with
-it). It is a personal preference, kept in the browser, and it overrides whatever palette the agent chose. Press it
-again to return to the stone default.
+A clear, soft water blue is the default, with ink-blue text and one deeper blue accent. The agent leaves colours alone unless
+you ask for a particular look. There is no theme toggle for now.
 
 ## Keeping things
 
@@ -76,6 +72,7 @@ agent/playbooks.py     playbooks as markdown files; agent/work.py holds work ite
 web/src/main.js        shell: AG-UI connection, morphing, history, voice input, dive wiring
 web/src/dive.js        the zoom between Flow and Depth (Web Animations, reversible)
 web/src/inspector.js   the depth view: event stream, shared state, node spec
+web/src/docs.js        the short orientation text (Horizon, Flow, Depth and the terms)
 web/src/shelf.js       client for the harbor
 web/src/render.js      renders the agent's node tree safely (style whitelist, sandboxed html)
 web/src/components.css theme variables and component styles

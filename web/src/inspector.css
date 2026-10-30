@@ -1,10 +1,10 @@
 .depths-root {
   /* The shallows: a little deeper than the surface so the dive still reads as going down, but light. */
-  --d-bg-top: #e2eae5;
-  --d-bg-bot: #ccdad3;
-  --d-text: #16201c;
-  --d-quiet: #55645d;
-  --d-jade: #1e6b57;
+  --d-bg-top: #c9dded;
+  --d-bg-bot: #abc8df;
+  --d-text: #0f2230;
+  --d-quiet: #3e596f;
+  --d-jade: #17698f;
   --d-amber: #8a5a00;
   --d-violet: #6b4bb0;
   --d-red: #b5473f;

@@ -13,7 +13,6 @@ import { shelf, playbooks, work, runs, profile, lines, suggestName, ago } from '
 import { createHorizon } from './horizon.js'
 import { renderShelfInto } from './shelfview.js'
 import { createRise } from './rise.js'
-import { createGauge } from './gauge.js'
 import './components.css'
 import './shell.css'
 
@@ -51,7 +50,7 @@ const inspector = createInspector($('depths'))
 const dive = createDive({
   stage: $('stage'), depths: $('depths'), veil: $('veil'),
   onOpened: () => inspector.focusFirst(),
-  onClosed: () => { returnFocus?.focus?.(); returnFocus = null; runPending() },
+  onClosed: () => { returnFocus?.focus?.(); returnFocus = null },
 })
 let returnFocus = null
 
@@ -59,33 +58,17 @@ let returnFocus = null
 const rise = createRise({
   stage: $('stage'), horizon: $('horizon'), haze: $('haze'),
   onOpened: () => horizon.focusFirst(),
-  onClosed: () => { (returnFocus?.isConnected ? returnFocus : $('say'))?.focus?.(); returnFocus = null; refreshSignal(); runPending() },
+  onClosed: () => { (returnFocus?.isConnected ? returnFocus : $('say'))?.focus?.(); returnFocus = null; refreshSignal() },
 })
 const layered = () => dive.isOpen() || rise.isOpen()
-
-// The gauge shows which layer you are in and moves you between them. Layers are adjacent, so a move of two steps
-// goes through Flow: it comes back first, then carries on when that has finished.
-const layerNow = () => (rise.isOpen() ? 'horizon' : dive.isOpen() ? 'depth' : 'flow')
-let pendingLayer = null
-const syncGauge = () => gauge.setLayer(layerNow())
-function runPending() { if (pendingLayer) { const t = pendingLayer; pendingLayer = null; goTo(t) } }
-function goTo(target) {
-  const cur = layerNow()
-  if (cur === target) return
-  if (target === 'flow') { if (cur === 'horizon') closeHorizon(); else surface(); return }
-  if (cur !== 'flow') { pendingLayer = target; if (cur === 'horizon') closeHorizon(); else surface(); return }
-  if (target === 'horizon') openHorizon(); else diveIn(null)
-}
-const gauge = createGauge($('gauge'), { onGo: goTo })
 
 async function openHorizon() {
   if (layered()) return
   returnFocus = document.activeElement
   await refreshHorizon()
   rise.open()
-  syncGauge()
 }
-const closeHorizon = () => { rise.close(); syncGauge() }
+const closeHorizon = () => rise.close()
 function goUp() { if (dive.isOpen()) surface(); else if (!rise.isOpen()) openHorizon() }
 function goDown() { if (rise.isOpen()) closeHorizon(); else if (!dive.isOpen()) diveIn(null) }
 
@@ -151,9 +134,8 @@ function diveIn(el) {
   inspector.setState(agent.state)
   inspector.show(nodeEl ? { nodeId: nodeEl.dataset.id } : {})
   dive.open(nodeEl ? nodeEl.getBoundingClientRect() : null)
-  syncGauge()
 }
-const surface = () => { dive.close(); syncGauge() }
+const surface = () => dive.close()
 inspector.onSurface(surface)
 
 // ---- morphing -------------------------------------------------------------------------------------------
@@ -428,22 +410,6 @@ $('rest').addEventListener('click', () => { clear(); openHorizon() })
 $('depth').addEventListener('click', () => diveIn(null))
 $('up').addEventListener('click', () => (rise.isOpen() ? closeHorizon() : openHorizon()))
 
-// Tone: stone (default) or blue water. A personal preference, kept in the browser, applied before first paint.
-function setTone(tone) {
-  const apply = () => {
-    if (tone === 'blue') root.dataset.tone = 'blue'; else delete root.dataset.tone
-    syncTone()
-    store.set('fluid:tone', tone)
-  }
-  if (!reduceMotion() && document.startViewTransition && !dive.isOpen()) {
-    root.classList.add('tone-switching')
-    document.startViewTransition(apply).finished.finally(() => root.classList.remove('tone-switching'))
-  } else apply()
-}
-// One tone control, fixed in the corner above every layer.
-const syncTone = () => document.querySelectorAll('.tone-toggle').forEach((b) => b.setAttribute('aria-pressed', String(root.dataset.tone === 'blue')))
-syncTone()
-document.querySelectorAll('.tone-toggle').forEach((b) => b.addEventListener('click', () => setTone(root.dataset.tone === 'blue' ? 'stone' : 'blue')))
 
 // ---- the shelf: forms you kept. Plain names under the line at rest; suggestions only while the shelf is empty ----
 
@@ -617,6 +583,5 @@ refreshShelf()
 refreshSignal()
 
 // The app opens on the Horizon. Whatever was on the surface last time is still there, one step down in Flow.
-refreshHorizon().finally(() => { rise.openInstant(); syncGauge(); root.classList.add('ready') })
+refreshHorizon().finally(() => { rise.openInstant(); root.classList.add('ready') })
 loadFontCss().then(setIframeFontCss).catch(() => {})   // mini-pages fall back to the system font if this fails
-syncGauge()

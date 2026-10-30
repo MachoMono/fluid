@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Fluid</title>
   <style>html:not(.ready) #stage { visibility: hidden }</style>
-  <script>try { if (localStorage.getItem("fluid:tone") === "blue") document.documentElement.dataset.tone = "blue" } catch (e) {}</script>
 </head>
 <body>
   <div id="stage">
@@ -40,7 +39,6 @@
   <div id="haze" aria-hidden="true"></div>
   <div id="horizon" role="dialog" aria-modal="true" aria-label="Horizon" hidden></div>
   <div id="depths" role="dialog" aria-modal="true" aria-label="Under the surface" hidden></div>
-  <nav id="gauge" aria-label="Layers and tools"></nav>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

@@ -1,13 +1,13 @@
 /* Fluid node components. Driven entirely by custom properties set on the root. */
 
-/* Resting palette: stone with a green cast, ink, and one jade accent. Always light by default, whatever the
-   system setting; a theme can ask for dark. */
+/* The palette: a clear, soft water blue with ink-blue text and one deeper blue accent; never bright. Always light by
+   default, whatever the system setting; a theme can ask for something else. */
 :root {
-  --bg: #eaefeb;
-  --fg: #16201c;
-  --accent: #1e6b57;
-  --surface: #f6f8f6;
-  --quiet: #66736c;
+  --bg: #cde1f0;
+  --fg: #0f2230;
+  --accent: #17698f;
+  --surface: #e8f1f8;
+  --quiet: #3e596f;
   --radius: 14px;
   --gap-unit: 8px;
   --pad-unit: 16px;
@@ -27,17 +27,6 @@
   --surface: #151d1a;
   --quiet: #7f8d86;
   color-scheme: dark;
-}
-
-/* Blue water: a tone the person can switch on. It wins over the agent's palette on purpose, because it is the
-   person's preference. A clear, soft water blue with ink-blue text and one deeper blue accent; never bright. */
-:root[data-tone="blue"] {
-  --bg: #cde1f0 !important;
-  --fg: #0f2230 !important;
-  --surface: #e8f1f8 !important;
-  --quiet: #3e596f !important;
-  --accent: #17698f !important;
-  color-scheme: light;
 }
 
 /* Derived tokens, resolved where the theme variables live. */
@@ -288,8 +277,6 @@ html, body { transition: background-color 800ms ease, color 800ms ease; }
 ::view-transition-new(dock) { animation: fade-in calc(var(--morph-ms, 720ms) * 0.3) ease-out calc(var(--morph-ms, 720ms) * 0.1) both; }
 @keyframes fade-out { to { opacity: 0; } }
 @keyframes fade-in { from { opacity: 0; } }
-/* Switching tone fades the new look in over the old one. */
-:root.tone-switching::view-transition-new(root) { animation: fade-in 600ms ease both; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {

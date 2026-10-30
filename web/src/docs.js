@@ -1,5 +1,5 @@
 // The orientation text: Fluid's own vocabulary, explained in a few quiet lines. Used inline on the Horizon for someone
-// new, and in the gauge's book card for everyone else.
+// new, and in the book card in the Horizon's corner for everyone else.
 const el = (tag, cls, text) => {
   const n = document.createElement(tag)
   if (cls) n.className = cls

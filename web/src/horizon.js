@@ -65,8 +65,23 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
   mount.append(top, hero, body)
 
   // New here? The vocabulary is Fluid's own, so it is explained in full until something is kept or has arrived. After that
-  // the same text lives behind the book in the gauge.
+  // the same text lives behind the book in the corner.
   const inlineDocs = buildDocs()
+
+  const help = el('button', 'hz-help')
+  help.type = 'button'; help.hidden = true; help.setAttribute('aria-label', 'How Fluid works'); help.setAttribute('aria-expanded', 'false')
+  help.innerHTML = '<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M12 6.6C10.4 5.3 8.1 4.7 4.5 5v12c3.6-.3 5.9.3 7.5 1.6 1.6-1.3 3.9-1.9 7.5-1.6V5c-3.6-.3-5.9.3-7.5 1.6zM12 6.6v12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  const pop = el('div', 'hz-pop'); pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'How Fluid works')
+  pop.append(buildDocs())
+  mount.append(help, pop)
+  const closePop = () => { pop.hidden = true; help.setAttribute('aria-expanded', 'false') }
+  help.addEventListener('click', () => {
+    const open = pop.hidden
+    pop.hidden = !open
+    help.setAttribute('aria-expanded', String(open))
+  })
+  document.addEventListener('pointerdown', (e) => { if (!pop.hidden && !pop.contains(e.target) && e.target !== help && !help.contains(e.target)) closePop() })
+  mount.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pop.hidden) { e.stopPropagation(); closePop(); help.focus() } })
 
   const section = (title, rows) => {
     const s = el('section', 'hz-section')
@@ -113,6 +128,8 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
       }
       const fresh = !needs.length && !results.length && !items.length
       if (fresh) parts.push(section('How Fluid works', [inlineDocs]))
+      help.hidden = fresh
+      if (fresh) closePop()
       body.replaceChildren(...parts)
     },
     attachMic() { return { mic, say } },
