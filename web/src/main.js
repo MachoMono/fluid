@@ -233,6 +233,21 @@ $('back').addEventListener('click', flowBack)
 $('rest').addEventListener('click', clear)
 $('depth').addEventListener('click', () => diveIn(null))
 
+// Tone: stone (default) or blue water. A personal preference, kept in the browser, applied before first paint.
+function setTone(tone) {
+  const apply = () => {
+    if (tone === 'blue') root.dataset.tone = 'blue'; else delete root.dataset.tone
+    $('tone').setAttribute('aria-pressed', String(tone === 'blue'))
+    store.set('fluid:tone', tone)
+  }
+  if (!reduceMotion() && document.startViewTransition && !dive.isOpen()) {
+    root.classList.add('tone-switching')
+    document.startViewTransition(apply).finished.finally(() => root.classList.remove('tone-switching'))
+  } else apply()
+}
+$('tone').setAttribute('aria-pressed', String(root.dataset.tone === 'blue'))
+$('tone').addEventListener('click', () => setTone(root.dataset.tone === 'blue' ? 'stone' : 'blue'))
+
 // ---- the shelf: forms you kept. Plain names under the line at rest; suggestions only while the shelf is empty ----
 
 const suggestions = ['A calm focus timer', 'Plan a week in Lisbon', 'Teach me the circle of fifths', 'Think through a decision with me']

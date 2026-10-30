@@ -65,6 +65,10 @@ body.resting #say { font-size: clamp(1.4rem, 3.2vw, 2.1rem); font-weight: 300; l
   outline: 2px solid var(--accent); outline-offset: 2px;
 }
 
+#tone[aria-pressed="true"] { color: var(--accent); }
+:root[data-tone="blue"] { --veil-1: #d2e3f0; --veil-2: #bcd3e5; --veil-3: #a9c5dc; }
+:root[data-tone="blue"] .depths-root { --d-bg-top: #d8e6f1; --d-bg-bot: #c3d7e6; --d-jade: #1f6f8f; --d-text: #14212b; --d-quiet: #4f6577; }
+
 #tools { display: flex; align-items: center; gap: 4px; min-height: 28px; }
 #whisper {
   flex: 1; text-align: right; color: var(--quiet); font-size: .9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -114,7 +118,7 @@ body.lens #surface, body.lens #surface * { cursor: zoom-in; }
 /* ---- layers used by the dive ---- */
 #veil {
   position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
-  background: radial-gradient(120% 90% at 50% 40%, #d3e2db 0%, #bdd1c7 55%, #adc4b9 100%);
+  background: radial-gradient(120% 90% at 50% 40%, var(--veil-1, #d3e2db) 0%, var(--veil-2, #bdd1c7) 55%, var(--veil-3, #adc4b9) 100%);
 }
 #depths { position: fixed; inset: 0; z-index: 3; overscroll-behavior: contain; will-change: transform, opacity, filter; }
 #depths[hidden] { display: none; }

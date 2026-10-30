@@ -35,6 +35,12 @@ through the Claude Agent SDK.
 The agent can search the web and nothing else (no files, no shell). It listens on localhost only. It acts on your
 Claude account, so do not expose the port.
 
+## Tone
+
+The **Blue** button in the tools row switches the whole interface to a soft water-blue tint (and the depth view with
+it). It is a personal preference, kept in the browser, and it overrides whatever palette the agent chose. Press it
+again to return to the stone default.
+
 ## Keeping things
 
 - **Keep** saves the current form to `~/Fluid/forms/` as one readable JSON file. At rest, your kept forms appear

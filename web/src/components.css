@@ -29,6 +29,17 @@
   color-scheme: dark;
 }
 
+/* Blue water: a light tint the person can switch on. It wins over the agent's palette on purpose, because it is the
+   person's preference. Soft, never bright: pale blue ground, ink-blue text, one deeper blue accent. */
+:root[data-tone="blue"] {
+  --bg: #dde9f2 !important;
+  --fg: #14212b !important;
+  --surface: #eef4f9 !important;
+  --quiet: #4f6577 !important;
+  --accent: #1f6f8f !important;
+  color-scheme: light;
+}
+
 /* Derived tokens, resolved where the theme variables live. */
 :root, [data-fluid] {
   --line: color-mix(in srgb, var(--fg) 14%, transparent);
@@ -272,6 +283,8 @@ html, body { transition: background-color 800ms ease, color 800ms ease; }
 ::view-transition-new(dock) { animation: fade-in calc(var(--morph-ms, 720ms) * 0.3) ease-out calc(var(--morph-ms, 720ms) * 0.1) both; }
 @keyframes fade-out { to { opacity: 0; } }
 @keyframes fade-in { from { opacity: 0; } }
+/* Switching tone fades the new look in over the old one. */
+:root.tone-switching::view-transition-new(root) { animation: fade-in 600ms ease both; }
 @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 @media (prefers-reduced-motion: reduce) {
