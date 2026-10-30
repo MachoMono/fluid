@@ -22,7 +22,7 @@
         <button type="button" id="back" disabled title="Return to the previous form">Back</button>
         <button type="button" id="rest" title="Clear the surface">Clear</button>
         <button type="button" id="keep" hidden title="Keep this form on your shelf">Keep</button>
-        <button type="button" id="work" title="Results your playbooks have saved">Work</button>
+        <button type="button" id="up" title="Above the surface: results, and anything that needs you (Alt+Up)">Above</button>
         <button type="button" id="tone" aria-pressed="false" title="Blue water tone">Blue</button>
         <button type="button" id="depth" title="See how this surface is made (Alt+D)">Depth</button>
         <form id="keepform" hidden autocomplete="off">
@@ -37,6 +37,8 @@
     <nav id="below" aria-label="Ideas"><ul id="suggest"></ul></nav>
   </div>
   <div id="veil" aria-hidden="true"></div>
+  <div id="haze" aria-hidden="true"></div>
+  <div id="above" role="dialog" aria-modal="true" aria-label="Above the surface" hidden></div>
   <div id="depths" role="dialog" aria-modal="true" aria-label="Under the surface" hidden></div>
   <script type="module" src="/src/main.js"></script>
 </body>

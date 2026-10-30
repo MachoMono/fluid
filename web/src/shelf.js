@@ -35,6 +35,13 @@ export const work = {
   status: (id, status) => call(`/work/${enc(id)}`, json('PATCH', { status })),
 }
 
+// Runs: one record per execution of a playbook, in ~/Fluid/runs.
+export const runs = {
+  list: (open = false) => call(`/runs${open ? '?open=true' : ''}`),
+  create: (playbook, playbook_id = '') => call('/runs', json('POST', { playbook, playbook_id })),
+  patch: (id, fields) => call(`/runs/${enc(id)}`, json('PATCH', fields)),
+}
+
 export const lines = (text) => String(text ?? '').split('\n').map((l) => l.trim()).filter(Boolean)
 
 // A name to offer when keeping: the title the agent gave the surface, else the first heading, else a plain fallback.

@@ -8,7 +8,9 @@ import { HttpAgent } from '@ag-ui/client'
 import { renderTree, applyTheme } from './render.js'
 import { createInspector } from './inspector.js'
 import { createDive } from './dive.js'
-import { shelf, playbooks, work, lines, suggestName, ago } from './shelf.js'
+import { shelf, playbooks, work, runs, lines, suggestName, ago } from './shelf.js'
+import { createAbove } from './above.js'
+import { createRise } from './rise.js'
 import './components.css'
 import './shell.css'
 
@@ -50,8 +52,54 @@ const dive = createDive({
 })
 let returnFocus = null
 
+// Above the surface. Only one layer is open at a time; the surface underneath is never lost.
+const rise = createRise({
+  stage: $('stage'), above: $('above'), haze: $('haze'),
+  onOpened: () => above.focusFirst(),
+  onClosed: () => { returnFocus?.focus?.(); returnFocus = null; refreshSignal() },
+})
+const layered = () => dive.isOpen() || rise.isOpen()
+
+async function openAbove() {
+  if (layered()) return
+  returnFocus = document.activeElement
+  await refreshAbove()
+  rise.open()
+}
+const closeAbove = () => rise.close()
+function goUp() { if (dive.isOpen()) surface(); else if (!rise.isOpen()) openAbove() }
+function goDown() { if (rise.isOpen()) closeAbove(); else if (!dive.isOpen()) diveIn(null) }
+
+async function refreshAbove() {
+  const [needs, results] = await Promise.all([
+    runs.list(true).catch(() => []),
+    work.list().then((l) => l.filter((w) => w.status !== 'done')).catch(() => []),
+  ])
+  above.refresh({ needs, results })
+}
+
+// A quiet mark on the Above button whenever something is waiting on the person.
+async function refreshSignal() {
+  const needs = await runs.list(true).catch(() => [])
+  $('up').classList.toggle('signal', needs.length > 0)
+}
+
+const above = createAbove($('above'), {
+  onSurface: closeAbove,
+  onWork: async (id) => { closeAbove(); await showWorkItem(id) },
+  onRun: async (r) => {
+    closeAbove()
+    if (r.status === 'failed') { whisper(`“${r.playbook}” failed${r.note ? `: ${r.note}` : ''}.`); await runs.patch(r.id, { dismissed: true }).catch(() => {}); refreshSignal(); return }
+    if (activeRun?.id === r.id) return                   // the run is still on the surface: just come back down to it
+    await runs.patch(r.id, { dismissed: true }).catch(() => {})   // it belonged to an earlier session: start it again
+    refreshSignal()
+    if (r.playbook_id) runPlaybook({ id: r.playbook_id })
+  },
+  onDismiss: async (id) => { await runs.patch(id, { dismissed: true }).catch(() => {}); refreshAbove(); refreshSignal() },
+})
+
 function diveIn(el) {
-  if (dive.isOpen()) return
+  if (layered()) return
   returnFocus = document.activeElement
   const nodeEl = el?.closest?.('[data-id]')
   inspector.setState(agent.state)
@@ -94,7 +142,7 @@ function show(ui, theme) {
     document.body.classList.toggle('resting', !ui)
     syncKeep()
   }
-  if (!reduceMotion() && !dive.isOpen()) {
+  if (!reduceMotion() && !layered()) {
     if (document.startViewTransition) {
       const t = document.startViewTransition(() => { run(); stagger(before, partNames()) })
       t.finished.finally(() => { staggerStyle?.remove(); staggerStyle = null })
@@ -110,7 +158,19 @@ function persist(state) {
   store.set(STATE_KEY, JSON.stringify({ ui: state.ui ?? null, theme: state.theme ?? {}, memory: state.memory ?? '' }))
 }
 
+function mirrorRun(state) {
+  const r = state.run
+  if (!activeRun || !r || typeof r !== 'object') return
+  const sig = JSON.stringify([r.status, r.step, r.note])
+  if (sig === runSig) return
+  runSig = sig
+  const status = ['working', 'waiting', 'done', 'failed'].includes(r.status) ? r.status : 'working'
+  runs.patch(activeRun.id, { status, step: String(r.step ?? '').slice(0, 120), note: String(r.note ?? '').slice(0, 300) })
+    .then(refreshSignal).catch(() => {})
+}
+
 function adopt(state, { remember = true } = {}) {
+  mirrorRun(state)
   inspector.setState(state)
   const next = JSON.stringify({ ui: state.ui ?? null, theme: state.theme ?? {} })
   if (next === current) { persist(state); return }
@@ -185,14 +245,20 @@ function setRunning(on) {
   on ? waterline.swell() : waterline.settle()
 }
 
+function failRun(note) {
+  if (!activeRun) return
+  runs.patch(activeRun.id, { status: 'failed', note: String(note).slice(0, 300) }).then(refreshSignal).catch(() => {})
+  activeRun = null
+}
+
 let spoken = ''
 const subscriber = {
   onEvent({ event }) { inspector.record(event) },
   onRunStartedEvent() { spoken = ''; whisper('') },
   onTextMessageContentEvent({ event }) { spoken += event.delta; whisper(spoken) },
   onStateChanged({ state }) { if (state) adopt(state) },
-  onRunFailed({ error }) { whisper(`Could not reach the agent: ${error?.message || error}`) },
-  onRunErrorEvent({ event }) { whisper(event.message) },
+  onRunFailed({ error }) { whisper(`Could not reach the agent: ${error?.message || error}`); failRun(error?.message || String(error)) },
+  onRunErrorEvent({ event }) { whisper(event.message); failRun(event.message) },
 }
 
 async function send(text) {
@@ -225,12 +291,16 @@ const api = {
 // results and playbooks are saved by the shell when you press the button, never by the agent.
 
 let activePlaybook = ''   // name of the playbook being run, recorded on the work item it produces
+let activeRun = null      // the run record for it, kept current from the agent's `run` state
+let runSig = ''
 
 async function runPlaybook(p) {
   if (running) return
   try {
     const pb = await playbooks.get(p.id)
     activePlaybook = pb.name
+    activeRun = await runs.create(pb.name, p.id).catch(() => null)
+    runSig = ''
     playbooks.ran(p.id).then(refreshShelf).catch(() => {})
     send(`[fluid:run-playbook]\n${pb.text}`)
   } catch (e) { whisper(e.message) }
@@ -249,22 +319,6 @@ function place(ui) {
 }
 
 const fieldValue = (name) => values[name] ?? document.querySelector(`#surface [data-name="${name}"]`)?.value ?? ''
-
-async function showWork() {
-  if (dive.isOpen()) return
-  try {
-    const items = await work.list()
-    place({ id: 'work', type: 'stack', gap: 22, children: [
-      { id: 'work-h', type: 'heading', level: 1, text: 'Work' },
-      items.length
-        ? { id: 'work-l', type: 'list', items: items.map((w) => ({
-            title: w.title,
-            subtitle: [w.playbook || w.kind, ago(w.made), w.status === 'done' ? 'done' : ''].filter(Boolean).join(' · '),
-            action: 'fluid:open-work', payload: { id: w.id } })) }
-        : { id: 'work-e', type: 'text', tone: 'quiet', text: 'Nothing here yet. Results from your playbooks are saved here.' },
-    ] })
-  } catch (e) { whisper(e.message) }
-}
 
 async function showWorkItem(id) {
   try {
@@ -287,7 +341,9 @@ async function localAction(action, payload) {
       if (!w?.title || !w?.body) { whisper('There is nothing to save yet.'); return }
       const saved = await work.create({ title: String(w.title), kind: String(w.kind || 'note'), body: String(w.body), playbook: activePlaybook })
       agent.state = { ...agent.state, work: null }
-      whisper(`Saved “${saved.title}” to Work.`)
+      if (activeRun) { runs.patch(activeRun.id, { status: 'done', work_id: saved.id, note: '' }).catch(() => {}); activeRun = null }
+      whisper(`Saved “${saved.title}” to Work. It is waiting above the surface.`)
+      refreshSignal()
     } else if (action === 'fluid:save-playbook') {
       const name = fieldValue('pb_name').trim()
       if (!name) { whisper('Give the playbook a name first.'); return }
@@ -315,7 +371,7 @@ $('stop').addEventListener('click', () => agent.abortRun())
 $('back').addEventListener('click', flowBack)
 $('rest').addEventListener('click', clear)
 $('depth').addEventListener('click', () => diveIn(null))
-$('work').addEventListener('click', showWork)
+$('up').addEventListener('click', () => (rise.isOpen() ? closeAbove() : openAbove()))
 
 // Tone: stone (default) or blue water. A personal preference, kept in the browser, applied before first paint.
 function setTone(tone) {
@@ -458,8 +514,11 @@ $('keepform').addEventListener('submit', async (e) => {
 
 addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && dive.isOpen()) { e.preventDefault(); surface() }
-  else if (e.altKey && e.code === 'KeyD') { e.preventDefault(); dive.isOpen() ? surface() : diveIn(null) }
-  else if (e.key === 'Alt' && !dive.isOpen()) document.body.classList.add('lens')
+  else if (e.key === 'Escape' && rise.isOpen()) { e.preventDefault(); closeAbove() }
+  else if (e.altKey && e.key === 'ArrowUp') { e.preventDefault(); goUp() }
+  else if (e.altKey && e.key === 'ArrowDown') { e.preventDefault(); goDown() }
+  else if (e.altKey && e.code === 'KeyD') { e.preventDefault(); if (rise.isOpen()) closeAbove(); else if (dive.isOpen()) surface(); else diveIn(null) }
+  else if (e.key === 'Alt' && !layered()) document.body.classList.add('lens')
 })
 const dropLens = () => { document.body.classList.remove('lens'); document.querySelector('.lens-target')?.classList.remove('lens-target') }
 addEventListener('keyup', (e) => { if (e.key === 'Alt') dropLens() })
@@ -488,8 +547,14 @@ addEventListener('wheel', (e) => {
   pinch += e.deltaY
   clearTimeout(pinchTimer)
   pinchTimer = setTimeout(() => { pinch = 0 }, 260)
-  if (pinch < -70 && !dive.isOpen()) { pinch = 0; diveIn(document.elementFromPoint(e.clientX, e.clientY)?.closest?.('#surface *')) }
-  else if (pinch > 70 && dive.isOpen()) { pinch = 0; surface() }
+  if (pinch < -70) {                      // pinching in goes down: toward the depths, or back to the surface from above
+    pinch = 0
+    if (rise.isOpen()) closeAbove()
+    else if (!dive.isOpen()) diveIn(document.elementFromPoint(e.clientX, e.clientY)?.closest?.('#surface *'))
+  } else if (pinch > 70) {                // pinching out goes up
+    pinch = 0
+    goUp()
+  }
 }, { passive: false })
 
 // Optional voice input where the browser supports it.
@@ -514,3 +579,4 @@ if (Rec) {
 inspector.setState(agent.state ?? saved)
 show(saved.ui ?? null, saved.theme ?? {})
 refreshShelf()
+refreshSignal()

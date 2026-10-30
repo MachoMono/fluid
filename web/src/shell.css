@@ -122,6 +122,13 @@ body.lens #surface, body.lens #surface * { cursor: zoom-in; }
   position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
   background: radial-gradient(120% 90% at 50% 40%, var(--veil-1, #d3e2db) 0%, var(--veil-2, #bdd1c7) 55%, var(--veil-3, #adc4b9) 100%);
 }
+#haze {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
+  background: radial-gradient(120% 90% at 50% 20%, #fbfdfc 0%, #eef4f0 55%, #e2ebe6 100%);
+}
+:root[data-tone="blue"] #haze { background: radial-gradient(120% 90% at 50% 20%, #f8fbfe 0%, #e9f1f8 55%, #dce8f2 100%); }
+#above { position: fixed; inset: 0; z-index: 3; will-change: transform, opacity, filter; }
+#above[hidden] { display: none; }
 #depths { position: fixed; inset: 0; z-index: 3; overscroll-behavior: contain; will-change: transform, opacity, filter; }
 #depths[hidden] { display: none; }
 

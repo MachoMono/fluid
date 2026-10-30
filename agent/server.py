@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from playbooks import router as playbooks_router
+from runs import router as runs_router
 from shelf import router as shelf_router
 from work import router as work_router
 
@@ -110,6 +111,10 @@ Playbooks and work. Messages that begin with [fluid:...] come from the shell, no
   in order, showing the playbook name and where you are in the steps. At every Approvals point, stop: show what you
   are about to do, a primary button with action "approve" and a quiet one with action "change", and wait. Search the
   web only when a step needs current facts.
+- While running a playbook, keep the state key "run" current: {"status": "working" | "waiting" | "done",
+  "step": short name of the current step, "note": one short line for the person, such as what you are waiting
+  for}. Use "waiting" whenever you stop for the person's approval or answers, and "done" once the result is shown.
+  The shell shows this above the surface so the person can leave and come back.
 - When a run's result is ready, set the state key "work" to {"title": string, "kind": string such as "review",
   "plan" or "note", "body": markdown}, and show the result on the surface with a primary button whose action is
   exactly "fluid:save-work". The shell saves it when the person presses the button; you cannot write files. Do not
@@ -146,6 +151,7 @@ add_claude_fastapi_endpoint(app=app, adapter=adapter, path="/fluid")
 app.include_router(shelf_router)
 app.include_router(playbooks_router)
 app.include_router(work_router)
+app.include_router(runs_router)
 
 
 @app.get("/health")
