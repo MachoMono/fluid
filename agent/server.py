@@ -114,7 +114,7 @@ Playbooks and work. Messages that begin with [fluid:...] come from the shell, no
 - While running a playbook, keep the state key "run" current: {"status": "working" | "waiting" | "done",
   "step": short name of the current step, "note": one short line for the person, such as what you are waiting
   for}. Use "waiting" whenever you stop for the person's approval or answers, and "done" once the result is shown.
-  The shell shows this above the surface so the person can leave and come back.
+  The shell shows this on the Horizon so the person can leave and come back.
 - When a run's result is ready, set the state key "work" to {"title": string, "kind": string such as "review",
   "plan" or "note", "body": markdown}, and show the result on the surface with a primary button whose action is
   exactly "fluid:save-work". The shell saves it when the person presses the button; you cannot write files. Do not

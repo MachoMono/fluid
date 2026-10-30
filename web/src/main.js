@@ -9,7 +9,7 @@ import { renderTree, applyTheme } from './render.js'
 import { createInspector } from './inspector.js'
 import { createDive } from './dive.js'
 import { shelf, playbooks, work, runs, lines, suggestName, ago } from './shelf.js'
-import { createAbove } from './above.js'
+import { createHorizon } from './horizon.js'
 import { createRise } from './rise.js'
 import './components.css'
 import './shell.css'
@@ -52,50 +52,50 @@ const dive = createDive({
 })
 let returnFocus = null
 
-// Above the surface. Only one layer is open at a time; the surface underneath is never lost.
+// The Horizon. Only one layer is open at a time; the surface underneath is never lost.
 const rise = createRise({
-  stage: $('stage'), above: $('above'), haze: $('haze'),
-  onOpened: () => above.focusFirst(),
+  stage: $('stage'), horizon: $('horizon'), haze: $('haze'),
+  onOpened: () => horizon.focusFirst(),
   onClosed: () => { returnFocus?.focus?.(); returnFocus = null; refreshSignal() },
 })
 const layered = () => dive.isOpen() || rise.isOpen()
 
-async function openAbove() {
+async function openHorizon() {
   if (layered()) return
   returnFocus = document.activeElement
-  await refreshAbove()
+  await refreshHorizon()
   rise.open()
 }
-const closeAbove = () => rise.close()
-function goUp() { if (dive.isOpen()) surface(); else if (!rise.isOpen()) openAbove() }
-function goDown() { if (rise.isOpen()) closeAbove(); else if (!dive.isOpen()) diveIn(null) }
+const closeHorizon = () => rise.close()
+function goUp() { if (dive.isOpen()) surface(); else if (!rise.isOpen()) openHorizon() }
+function goDown() { if (rise.isOpen()) closeHorizon(); else if (!dive.isOpen()) diveIn(null) }
 
-async function refreshAbove() {
+async function refreshHorizon() {
   const [needs, results] = await Promise.all([
     runs.list(true).catch(() => []),
     work.list().then((l) => l.filter((w) => w.status !== 'done')).catch(() => []),
   ])
-  above.refresh({ needs, results })
+  horizon.refresh({ needs, results })
 }
 
-// A quiet mark on the Above button whenever something is waiting on the person.
+// A quiet mark on the Horizon button whenever something is waiting on the person.
 async function refreshSignal() {
   const needs = await runs.list(true).catch(() => [])
   $('up').classList.toggle('signal', needs.length > 0)
 }
 
-const above = createAbove($('above'), {
-  onSurface: closeAbove,
-  onWork: async (id) => { closeAbove(); await showWorkItem(id) },
+const horizon = createHorizon($('horizon'), {
+  onSurface: closeHorizon,
+  onWork: async (id) => { closeHorizon(); await showWorkItem(id) },
   onRun: async (r) => {
-    closeAbove()
+    closeHorizon()
     if (r.status === 'failed') { whisper(`“${r.playbook}” failed${r.note ? `: ${r.note}` : ''}.`); await runs.patch(r.id, { dismissed: true }).catch(() => {}); refreshSignal(); return }
     if (activeRun?.id === r.id) return                   // the run is still on the surface: just come back down to it
     await runs.patch(r.id, { dismissed: true }).catch(() => {})   // it belonged to an earlier session: start it again
     refreshSignal()
     if (r.playbook_id) runPlaybook({ id: r.playbook_id })
   },
-  onDismiss: async (id) => { await runs.patch(id, { dismissed: true }).catch(() => {}); refreshAbove(); refreshSignal() },
+  onDismiss: async (id) => { await runs.patch(id, { dismissed: true }).catch(() => {}); refreshHorizon(); refreshSignal() },
 })
 
 function diveIn(el) {
@@ -342,7 +342,7 @@ async function localAction(action, payload) {
       const saved = await work.create({ title: String(w.title), kind: String(w.kind || 'note'), body: String(w.body), playbook: activePlaybook })
       agent.state = { ...agent.state, work: null }
       if (activeRun) { runs.patch(activeRun.id, { status: 'done', work_id: saved.id, note: '' }).catch(() => {}); activeRun = null }
-      whisper(`Saved “${saved.title}” to Work. It is waiting above the surface.`)
+      whisper(`Saved “${saved.title}” to Work. It is waiting on the Horizon.`)
       refreshSignal()
     } else if (action === 'fluid:save-playbook') {
       const name = fieldValue('pb_name').trim()
@@ -371,7 +371,7 @@ $('stop').addEventListener('click', () => agent.abortRun())
 $('back').addEventListener('click', flowBack)
 $('rest').addEventListener('click', clear)
 $('depth').addEventListener('click', () => diveIn(null))
-$('up').addEventListener('click', () => (rise.isOpen() ? closeAbove() : openAbove()))
+$('up').addEventListener('click', () => (rise.isOpen() ? closeHorizon() : openHorizon()))
 
 // Tone: stone (default) or blue water. A personal preference, kept in the browser, applied before first paint.
 function setTone(tone) {
@@ -514,10 +514,10 @@ $('keepform').addEventListener('submit', async (e) => {
 
 addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && dive.isOpen()) { e.preventDefault(); surface() }
-  else if (e.key === 'Escape' && rise.isOpen()) { e.preventDefault(); closeAbove() }
+  else if (e.key === 'Escape' && rise.isOpen()) { e.preventDefault(); closeHorizon() }
   else if (e.altKey && e.key === 'ArrowUp') { e.preventDefault(); goUp() }
   else if (e.altKey && e.key === 'ArrowDown') { e.preventDefault(); goDown() }
-  else if (e.altKey && e.code === 'KeyD') { e.preventDefault(); if (rise.isOpen()) closeAbove(); else if (dive.isOpen()) surface(); else diveIn(null) }
+  else if (e.altKey && e.code === 'KeyD') { e.preventDefault(); if (rise.isOpen()) closeHorizon(); else if (dive.isOpen()) surface(); else diveIn(null) }
   else if (e.key === 'Alt' && !layered()) document.body.classList.add('lens')
 })
 const dropLens = () => { document.body.classList.remove('lens'); document.querySelector('.lens-target')?.classList.remove('lens-target') }
@@ -549,7 +549,7 @@ addEventListener('wheel', (e) => {
   pinchTimer = setTimeout(() => { pinch = 0 }, 260)
   if (pinch < -70) {                      // pinching in goes down: toward the depths, or back to the surface from above
     pinch = 0
-    if (rise.isOpen()) closeAbove()
+    if (rise.isOpen()) closeHorizon()
     else if (!dive.isOpen()) diveIn(document.elementFromPoint(e.clientX, e.clientY)?.closest?.('#surface *'))
   } else if (pinch > 70) {                // pinching out goes up
     pinch = 0

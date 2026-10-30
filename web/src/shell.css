@@ -127,8 +127,8 @@ body.lens #surface, body.lens #surface * { cursor: zoom-in; }
   background: radial-gradient(120% 90% at 50% 20%, #fbfdfc 0%, #eef4f0 55%, #e2ebe6 100%);
 }
 :root[data-tone="blue"] #haze { background: radial-gradient(120% 90% at 50% 20%, #f8fbfe 0%, #e9f1f8 55%, #dce8f2 100%); }
-#above { position: fixed; inset: 0; z-index: 3; will-change: transform, opacity, filter; }
-#above[hidden] { display: none; }
+#horizon { position: fixed; inset: 0; z-index: 3; will-change: transform, opacity, filter; }
+#horizon[hidden] { display: none; }
 #depths { position: fixed; inset: 0; z-index: 3; overscroll-behavior: contain; will-change: transform, opacity, filter; }
 #depths[hidden] { display: none; }
 

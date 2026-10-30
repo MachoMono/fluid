@@ -22,20 +22,20 @@ by repeating itself. A playbook is that channel.
 ## Three layers, one vertical axis
 
 ```
-Above    watch things work: what needs you, and what was produced        (glance)
+Horizon  watch things work: what needs you, and what was produced        (glance)
 -------- the waterline
 Surface  talk to the agent, shape things, tweak a playbook                (build)
 Depth    the AG-UI events, shared state and the spec of any part          (inspect)
 ```
 
-Adjacent layers only: Above and Depth are both one step from Surface. Moving up or down is one gesture family
+Adjacent layers only: Horizon and Depth are both one step from Surface. Moving up or down is one gesture family
 (buttons, Alt+Up / Alt+Down, pinch) with one reversible animation each way. The surface underneath is never lost
 while you are above or below it.
 
-**Above** holds two kinds of things, both tied to playbooks:
+**Horizon** holds two kinds of things, both tied to playbooks:
 - *Needs you*: a run is waiting for approval, or failed. Temporary; act on it or dismiss it.
 - *Results*: work items. Lasting until marked done.
-When nothing needs the person, Above is nearly empty, and empty means all is well. Failures must always raise a
+When nothing needs the person, Horizon is nearly empty, and empty means all is well. Failures must always raise a
 notification; silence must never hide a problem. Pressing an item drops to the Surface with it loaded.
 
 ## Objects
@@ -82,8 +82,8 @@ person's Claude account. Mini-pages the agent writes run in a sandbox with no ne
 
 ## Phases
 
-1. **Above.** The third layer and the rise to it. Run records. Needs-you notifications from manual runs. Work
-   moves up. The Above button signals when something needs the person.
+1. **Horizon.** The third layer and the rise to it. Run records. Needs-you notifications from manual runs. Work
+   moves up. The Horizon button signals when something needs the person.
 2. **The companion.** `profile.md`, the capability list, the interview playbook, subagent support.
 3. **Levels.** Level and gate fields on playbooks, evidence from run history, promotion proposals as notifications.
 4. **The runner.** A background process that runs playbooks on schedules the person sets, an approvals queue,
@@ -94,7 +94,7 @@ person's Claude account. Mini-pages the agent writes run in a sandbox with no ne
 - Local, single user. One `~/Fluid` folder.
 - Playbooks and work items are markdown; runs and forms are JSON.
 - Triggers are set by the person. Manual first.
-- Above is a fixed, glanceable layout; the agent writes only the words in it.
+- Horizon is a fixed, glanceable layout; the agent writes only the words in it.
 
 ## Open
 

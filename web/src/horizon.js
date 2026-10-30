@@ -1,6 +1,6 @@
-// Above the surface: where results arrive and anything that needs the person shows up. Fixed, glanceable layout;
+// The Horizon: where results arrive and anything that needs the person shows up. Fixed, glanceable layout;
 // the only things that vary are the words. Empty means all is well.
-import './above.css'
+import './horizon.css'
 import { ago } from './shelf.js'
 
 const el = (tag, cls, text) => {
@@ -10,32 +10,32 @@ const el = (tag, cls, text) => {
   return n
 }
 
-export function createAbove(mount, { onSurface, onWork, onRun, onDismiss }) {
-  mount.classList.add('above-root')
+export function createHorizon(mount, { onSurface, onWork, onRun, onDismiss }) {
+  mount.classList.add('horizon-root')
 
-  const back = el('button', 'ab-back')
+  const back = el('button', 'hz-back')
   back.type = 'button'
   back.append(el('span', '', 'Back to the surface'), el('kbd', '', 'Esc'))
   back.addEventListener('click', onSurface)
 
-  const body = el('div', 'ab-body')
+  const body = el('div', 'hz-body')
   mount.append(back, body)
 
   const section = (title, rows) => {
-    const s = el('section', 'ab-section')
-    s.append(el('h2', 'ab-title', title), ...rows)
+    const s = el('section', 'hz-section')
+    s.append(el('h2', 'hz-title', title), ...rows)
     return s
   }
 
   const row = (title, sub, onPress, onClear) => {
-    const r = el('div', 'ab-row')
-    const open = el('button', 'ab-open')
+    const r = el('div', 'hz-row')
+    const open = el('button', 'hz-open')
     open.type = 'button'
-    open.append(el('span', 'ab-name', title), el('span', 'ab-sub', sub))
+    open.append(el('span', 'hz-name', title), el('span', 'hz-sub', sub))
     open.addEventListener('click', onPress)
     r.append(open)
     if (onClear) {
-      const x = el('button', 'ab-clear', 'Dismiss')
+      const x = el('button', 'hz-clear', 'Dismiss')
       x.type = 'button'
       x.addEventListener('click', onClear)
       r.append(x)
@@ -59,8 +59,8 @@ export function createAbove(mount, { onSurface, onWork, onRun, onDismiss }) {
         parts.push(section('Results', results.map((w) => row(w.title, `${w.playbook || w.kind} · ${ago(w.made)}`, () => onWork(w.id)))))
       }
       if (!parts.length) {
-        const calm = el('div', 'ab-calm')
-        calm.append(el('p', 'ab-calm-line', 'Nothing needs you.'), el('p', 'ab-calm-sub', 'Results from your playbooks arrive here.'))
+        const calm = el('div', 'hz-calm')
+        calm.append(el('p', 'hz-calm-line', 'Nothing needs you.'), el('p', 'hz-calm-sub', 'Results from your playbooks arrive here.'))
         parts.push(calm)
       }
       body.replaceChildren(...parts)
