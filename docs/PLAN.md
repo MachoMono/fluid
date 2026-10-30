@@ -34,7 +34,7 @@ while you are above or below it. The app opens on the Horizon, and Clear returns
 
 **Horizon** holds two kinds of things, both tied to playbooks:
 - *Needs you*: a run is waiting for approval, or failed. Temporary; act on it or dismiss it.
-- *Results*: work items. Lasting until marked done.
+- *Arrivals*: work items. Lasting until marked done.
 When nothing needs the person, Horizon is nearly empty, and empty means all is well. Failures must always raise a
 notification; silence must never hide a problem. Pressing an item drops into Flow with that thing already on screen.
 

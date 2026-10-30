@@ -17,7 +17,7 @@ design principle, not a visual theme.
   waterline one after another, and parts that go sink away (View Transitions API, with a plain fade as fallback).
 - For anything the node vocabulary cannot express, the agent can write a sandboxed mini-page (`html` node) that
   talks back through `postMessage`.
-- The app opens on the **Horizon**: the question, what needs you, your results, and your playbooks and kept forms.
+- The app opens on the **Horizon**: a greeting, what needs you, your arrivals, and your playbooks and kept forms.
   Typing there drops you into **Flow**, where the agent shapes things with you. Clear returns home. Every earlier
   form can be flowed back to with Back.
 - **Depth.** The AG-UI machinery is hidden by default. Dive under the surface to see the raw event stream, the shared
@@ -39,7 +39,7 @@ Claude account, so do not expose the port.
 
 ## Tone
 
-The **Blue** button in the tools row switches the whole interface to a soft water-blue tint (and the depth view with
+The droplet in the top-right corner, the same on every layer, switches the whole interface to a soft water blue (the Depth view with
 it). It is a personal preference, kept in the browser, and it overrides whatever palette the agent chose. Press it
 again to return to the stone default.
 
@@ -47,7 +47,7 @@ again to return to the stone default.
 
 - **Keep** saves the current form to `~/Fluid/forms/` as one readable JSON file. At rest, your kept forms appear
   under the line and open instantly, with no agent run. Remove asks twice before it deletes.
-- The agent never reads the shelf, so keeping things adds nothing to its context.
+- The agent never reads the harbor, so keeping things adds nothing to its context.
 - Set `FLUID_HOME` to keep the folder somewhere else.
 
 ## Playbooks and work
@@ -61,19 +61,19 @@ again to return to the stone default.
 - Running a playbook loads only that playbook into the agent. It asks for its inputs, does the steps, stops at
   approval points, and ends with a result. The agent proposes, and the shell saves the result when you press
   the button. The agent has no file access.
-- Results are **work items**: markdown files in `~/Fluid/work/` that say which playbook made them. The **Work**
-  button lists them, and each can be marked done.
+- What a run produces is an **arrival**: a work item, saved as a markdown file in `~/Fluid/work/` that says which
+  playbook made it. Arrivals appear on the Horizon, and each can be marked done.
 
 ## Layout
 
 ```
 agent/server.py        the agent and the prompt that defines the node vocabulary
-agent/shelf.py         the shelf: kept forms as plain files in ~/Fluid
+agent/shelf.py         the harbor: kept forms as plain files in ~/Fluid
 agent/playbooks.py     playbooks as markdown files; agent/work.py holds work items; agent/fsutil.py shared helpers
 web/src/main.js        shell: AG-UI connection, morphing, history, voice input, dive wiring
 web/src/dive.js        the zoom between Flow and Depth (Web Animations, reversible)
 web/src/inspector.js   the depth view: event stream, shared state, node spec
-web/src/shelf.js       client for the shelf
+web/src/shelf.js       client for the harbor
 web/src/render.js      renders the agent's node tree safely (style whitelist, sandboxed html)
 web/src/components.css theme variables and component styles
 ```

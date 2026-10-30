@@ -56,10 +56,8 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
   const body = el('div', 'hz-body')
   const shelfList = el('ul', 'hz-shelf shelf-list')
   shelfList.id = 'hz-shelf'
-  const tone = el('button', 'tone-toggle', 'Blue')
-  tone.type = 'button'; tone.setAttribute('aria-pressed', 'false'); tone.title = 'Blue water tone'
   const top = el('div', 'hz-top')
-  top.append(tone, down)
+  top.append(down)
   mount.append(top, hero, body)
 
   // Orientation: the vocabulary here is Fluid's own, so it is explained in a few quiet lines. Shown in full to someone
@@ -68,7 +66,7 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
     const root = el('div', 'hz-docs')
     const grid = el('div', 'hz-layers')
     for (const [name, text, keys] of [
-      ['Horizon', 'Home. See what needs you and what is ready, and start something you have saved.', 'Alt ↑ from Flow'],
+      ['Horizon', 'Home. See what needs you and what has arrived, and set out on something from your harbor.', 'Alt ↑ from Flow'],
       ['Flow', 'Where you and the agent make things together. Say what you want and the screen takes shape.', 'Alt ↓ from Horizon'],
       ['Depth', 'Beneath it all. The live events and state behind anything you see.', 'Alt ↓ from Flow'],
     ]) {
@@ -77,14 +75,15 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
       grid.append(c)
     }
     const terms = el('p', 'hz-terms')
-    terms.append(el('b', '', 'Playbook'), ' is a process you can run again. ', el('b', '', 'Results'), ' are what a run produces. Your ',
-      el('b', '', 'shelf'), ' holds playbooks and anything you keep.')
+    terms.append(el('b', '', 'Playbook'), ' is a process you can run again. ', el('b', '', 'Arrivals'), ' are what a run produces. Your ',
+      el('b', '', 'harbor'), ' holds playbooks and anything you keep.')
     root.append(grid, terms)
     return root
   }
   const inlineDocs = buildDocs()
 
-  const help = el('button', 'hz-help', '?')
+  const help = el('button', 'hz-help')
+  help.innerHTML = '<svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M12 6.6C10.4 5.3 8.1 4.7 4.5 5v12c3.6-.3 5.9.3 7.5 1.6 1.6-1.3 3.9-1.9 7.5-1.6V5c-3.6-.3-5.9.3-7.5 1.6zM12 6.6v12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   help.type = 'button'; help.hidden = true; help.setAttribute('aria-label', 'How Fluid works'); help.setAttribute('aria-expanded', 'false')
   const pop = el('div', 'hz-pop'); pop.hidden = true; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'How Fluid works')
   pop.append(buildDocs())
@@ -135,11 +134,11 @@ export function createHorizon(mount, { onDown, onAsk, onWork, onRun, onDismiss, 
         parts.push(section('Needs you', needs.map((r) => row(r.playbook, describe(r), () => onRun(r), () => onDismiss(r.id)))))
       }
       if (results.length) {
-        parts.push(section('Results', results.map((w) => row(w.title, `${w.playbook || w.kind} · ${ago(w.made)}`, () => onWork(w.id)))))
+        parts.push(section('Arrivals', results.map((w) => row(w.title, `${w.playbook || w.kind} · ${ago(w.made)}`, () => onWork(w.id)))))
       }
       if (items.length) {
         renderShelfInto(shelfList, items, shelf, [])
-        parts.push(section('Shelf', [shelfList]))
+        parts.push(section('Harbor', [shelfList]))
       }
       const fresh = !needs.length && !results.length && !items.length
       if (fresh) parts.push(section('How Fluid works', [inlineDocs]))

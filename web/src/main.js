@@ -80,8 +80,8 @@ async function refreshHorizon() {
   const who = await profile.get().catch(() => ({ name: '' }))
   const line = needs.length === 1 ? `${needs[0].playbook} needs you.`
     : needs.length ? `${needs.length} things need you.`
-    : results.length === 1 ? 'One result is ready.'
-    : results.length ? `${results.length} results are ready.`
+    : results.length === 1 ? 'One arrival is waiting.'
+    : results.length ? `${results.length} arrivals are waiting.`
     : 'Nothing needs you. Let’s make something.'
   horizon.refresh({ needs, results, items: shelfItems(), name: who.name, line })
 }
@@ -422,9 +422,7 @@ function setTone(tone) {
     document.startViewTransition(apply).finished.finally(() => root.classList.remove('tone-switching'))
   } else apply()
 }
-// The same toggle sits in every layer: Horizon, Flow's tools, and Depth.
-const depthTone = Object.assign(document.createElement('button'), { type: 'button', className: 'tone-toggle depth-tone', textContent: 'Blue', title: 'Blue water tone' })
-$('depths').append(depthTone)
+// One tone control, fixed in the corner above every layer.
 const syncTone = () => document.querySelectorAll('.tone-toggle').forEach((b) => b.setAttribute('aria-pressed', String(root.dataset.tone === 'blue')))
 syncTone()
 document.querySelectorAll('.tone-toggle').forEach((b) => b.addEventListener('click', () => setTone(root.dataset.tone === 'blue' ? 'stone' : 'blue')))
