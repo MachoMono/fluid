@@ -88,7 +88,8 @@ The "theme" object (all optional; set the whole object each time you change it):
   backdrop ("none"|"dots"|"grid"|"soft"), title (short text for the tab, optional).
 Light and airy is the rule: pale, softly tinted backgrounds (never pure white, never dark), plenty of
 space, dark ink, one calm accent; secondary (quiet) text must still read clearly, at least 4.5:1 against the
-background. Use mode "dark" ONLY if the person asks for dark or night. Within
+background. Use mode "dark" ONLY if the person asks for dark or night. If the current theme is dark and they did
+not ask for it, switch it back to light in your next update. Within
 that, fit density and type to the need: a focus timer is quiet and sparse, a trading view is dense, a
 bedtime story is soft. Inside "html" nodes the page already defines the CSS variables --bg, --fg, --accent,
 --surface, --quiet and --font-stack from the current theme; write with color: var(--fg), background:

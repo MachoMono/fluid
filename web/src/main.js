@@ -24,9 +24,13 @@ const store = {
 
 const blank = { ui: null, theme: {}, memory: '' }
 let saved = blank
-try { saved = { ...blank, ...JSON.parse(store.get('fluid:state') || '{}') } } catch { saved = blank }
-const threadId = store.get('fluid:thread') || crypto.randomUUID()
-store.set('fluid:thread', threadId)
+// Version 2 of the saved state. Earlier versions could carry a dark theme from before light became the default, and
+// the agent keeps whatever theme it is handed, so those are dropped rather than migrated.
+const STATE_KEY = 'fluid:state:2', THREAD_KEY = 'fluid:thread:2'
+try { localStorage.removeItem('fluid:state'); localStorage.removeItem('fluid:thread') } catch { /* nothing to clean */ }
+try { saved = { ...blank, ...JSON.parse(store.get(STATE_KEY) || '{}') } } catch { saved = blank }
+const threadId = store.get(THREAD_KEY) || crypto.randomUUID()
+store.set(THREAD_KEY, threadId)
 
 const agent = new HttpAgent({ url: AGENT_URL, threadId, initialState: saved })
 
@@ -103,7 +107,7 @@ function show(ui, theme) {
 }
 
 function persist(state) {
-  store.set('fluid:state', JSON.stringify({ ui: state.ui ?? null, theme: state.theme ?? {}, memory: state.memory ?? '' }))
+  store.set(STATE_KEY, JSON.stringify({ ui: state.ui ?? null, theme: state.theme ?? {}, memory: state.memory ?? '' }))
 }
 
 function adopt(state, { remember = true } = {}) {
